@@ -28,7 +28,9 @@ import {
   Share2,
   Palette,
   Sparkles,
-  HeartPulse
+  HeartPulse,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { PageHeader, IconButton } from './hb/listing';
 import { StatCard } from './hb/common/StatCard';
@@ -84,6 +86,38 @@ export default function Dashboard() {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  const [retentionDate, setRetentionDate] = useState({ month: currentMonth, year: currentYear });
+  const [pickerYear, setPickerYear] = useState(currentYear);
+  const [showRetentionDropdown, setShowRetentionDropdown] = useState(false);
+
+  const [revenueDate, setRevenueDate] = useState({ month: currentMonth, year: currentYear });
+  const [revenuePickerYear, setRevenuePickerYear] = useState(currentYear);
+  const [showRevenueDropdown, setShowRevenueDropdown] = useState(false);
+
+  const [commissionFilter, setCommissionFilter] = useState('This Month');
+  const [showCommissionFilter, setShowCommissionFilter] = useState(false);
+
+  const [flagsFilter, setFlagsFilter] = useState('This Month');
+  const [showFlagsFilter, setShowFlagsFilter] = useState(false);
+
+  const [flagTrendDate, setFlagTrendDate] = useState({ month: currentMonth, year: currentYear });
+  const [flagTrendPickerYear, setFlagTrendPickerYear] = useState(currentYear);
+  const [showFlagTrendDropdown, setShowFlagTrendDropdown] = useState(false);
+
+  const [wardrobeFilter, setWardrobeFilter] = useState('Overall');
+  const [showWardrobeFilter, setShowWardrobeFilter] = useState(false);
+
+  const [wqTrendDate, setWqTrendDate] = useState({ month: currentMonth, year: currentYear });
+  const [wqTrendPickerYear, setWqTrendPickerYear] = useState(currentYear);
+  const [showWqTrendDropdown, setShowWqTrendDropdown] = useState(false);
+
+  const monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
   // Independent Filter state for AI Utilization
   const [aiFilter, setAiFilter] = useState('This Month');
   const [showAiFilter, setShowAiFilter] = useState(false);
@@ -99,6 +133,37 @@ export default function Dashboard() {
     if (total === 0) return 0;
     return (val1 / total) * 100;
   };
+
+  const getDaysInMonth = (month: number, year: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const dynamicFlagTrendData = Array.from({ length: getDaysInMonth(flagTrendDate.month, flagTrendDate.year) }).map((_, i) => {
+    // Generate organic-looking curve data per day
+    const baseRaised = 35 + Math.sin(i * 0.4) * 15;
+    return {
+      date: (i + 1).toString(),
+      raised: Math.max(0, Math.floor(baseRaised + (Math.random() * 10)))
+    };
+  });
+
+  const dynamicWqTrendData = Array.from({ length: getDaysInMonth(wqTrendDate.month, wqTrendDate.year) }).map((_, i) => {
+    // Generate organic-looking curve data per day
+    const wqScore = 63 + Math.sin(i * 0.4) * 4;
+    return {
+      date: (i + 1).toString(),
+      score: Math.max(0, Math.min(100, Math.floor(wqScore + (Math.random() * 6 - 3))))
+    };
+  });
+
+  const dynamicRevenueTrendData = Array.from({ length: getDaysInMonth(revenueDate.month, revenueDate.year) }).map((_, i) => {
+    // Generate organic-looking curve data for revenue per day
+    const baseRevenue = 450 + Math.sin(i * 0.5) * 150 + (i * 10);
+    return {
+      date: (i + 1).toString(),
+      revenue: Math.max(0, Math.floor(baseRevenue + (Math.random() * 100 - 50)))
+    };
+  });
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -162,7 +227,47 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Retention Cohorts</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Retention Cohorts</h3>
+                <div className="relative">
+                  <button 
+                    onClick={() => { setShowRetentionDropdown(!showRetentionDropdown); setPickerYear(retentionDate.year); }}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {monthFull[retentionDate.month]} {retentionDate.year}
+                  </button>
+                  {showRetentionDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-3 z-50">
+                      <div className="flex items-center justify-between mb-3 text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                        <button onClick={() => setPickerYear(y => y - 1)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"><ChevronLeft size={16} /></button>
+                        <span>{pickerYear}</span>
+                        <button disabled={pickerYear >= currentYear} onClick={() => setPickerYear(y => y + 1)} className={`p-1 rounded-md transition-colors ${pickerYear >= currentYear ? 'opacity-30 cursor-not-allowed' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}><ChevronRight size={16} /></button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {monthShort.map((m, i) => {
+                          const isFuture = pickerYear > currentYear || (pickerYear === currentYear && i > currentMonth);
+                          const isSelected = retentionDate.year === pickerYear && retentionDate.month === i;
+                          return (
+                            <button
+                              key={m}
+                              onClick={() => { setRetentionDate({ month: i, year: pickerYear }); setShowRetentionDropdown(false); }}
+                              disabled={isFuture}
+                              className={`py-1.5 text-xs rounded-md text-center transition-colors 
+                                ${isFuture ? 'opacity-30 cursor-not-allowed text-neutral-500 bg-transparent' : 
+                                  isSelected ? 'bg-primary-600 text-white font-medium' : 
+                                  'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                                }
+                              `}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -192,14 +297,14 @@ export default function Dashboard() {
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Activation Funnel (Past 7 Days)</h3>
               <div className="h-48 w-full flex items-center justify-center">
                  <ResponsiveContainer width="100%" height="100%">
-                   <FunnelChart>
-                     <RechartsTooltip />
+                   <FunnelChart margin={{ top: 20, right: 120, bottom: 20, left: 20 }}>
+                     <RechartsTooltip cursor={{ fill: '#f5f5f5', opacity: 0.1 }} />
                      <Funnel
                        dataKey="value"
                        data={funnelData}
-                       isAnimationActive
+                       isAnimationActive={true}
                      >
-                       <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                       <LabelList position="right" fill="currentColor" stroke="none" dataKey="name" className="fill-neutral-700 dark:fill-neutral-300 text-xs font-medium" />
                      </Funnel>
                    </FunnelChart>
                  </ResponsiveContainer>
@@ -214,29 +319,107 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mt-8">
           2. Monetization Intelligence
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <StatCard label="Revenue Today" value={"$1,240.00"} icon={DollarSign} trend={{ value: 'Current Day Only', positive: true }} />
           <StatCard label="Revenue MTD" value={"$28,450.00"} icon={TrendingUp} trend={{ value: 'Current Month Only', positive: true }} />
           <StatCard label="Purchases Today" value={234} icon={ShoppingCart} trend={{ value: 'Current Day Only', positive: true }} />
-          <StatCard label="Commission — iOS" value={"$4,520.00"} icon={Percent} trend={{ value: 'Platform Fee (30%)', positive: false }} />
-          <StatCard label="Commission — Android" value={"$3,840.00"} icon={Percent} trend={{ value: 'Platform Fee (30%)', positive: false }} />
+          
+          <Card className="lg:col-span-2">
+            <div className="p-4 flex flex-col justify-between h-full bg-neutral-50 dark:bg-neutral-900/50">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Percent className="w-4 h-4 text-primary-500" />
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Platform Commission</h3>
+                </div>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowCommissionFilter(!showCommissionFilter)}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {commissionFilter}
+                  </button>
+                  {showCommissionFilter && (
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg py-1 z-50">
+                      {['Last 24 Hours', 'This Week', 'This Month', 'Overall'].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => { setCommissionFilter(opt); setShowCommissionFilter(false); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors ${commissionFilter === opt ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-neutral-700 dark:text-neutral-300'}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <h4 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">$4,520.00</h4>
+                  <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">iOS (30% Fee)</p>
+                </div>
+                <div className="border-l border-neutral-200 dark:border-neutral-800 pl-4">
+                  <h4 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">$3,840.00</h4>
+                  <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Android (30% Fee)</p>
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Revenue Trend Chart (Current Month)</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Revenue Trend Chart</h3>
+                <div className="relative">
+                  <button 
+                    onClick={() => { setShowRevenueDropdown(!showRevenueDropdown); setRevenuePickerYear(revenueDate.year); }}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {monthFull[revenueDate.month]} {revenueDate.year}
+                  </button>
+                  {showRevenueDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-3 z-50">
+                      <div className="flex items-center justify-between mb-3 text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                        <button onClick={() => setRevenuePickerYear(y => y - 1)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"><ChevronLeft size={16} /></button>
+                        <span>{revenuePickerYear}</span>
+                        <button disabled={revenuePickerYear >= currentYear} onClick={() => setRevenuePickerYear(y => y + 1)} className={`p-1 rounded-md transition-colors ${revenuePickerYear >= currentYear ? 'opacity-30 cursor-not-allowed' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}><ChevronRight size={16} /></button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {monthShort.map((m, i) => {
+                          const isFuture = revenuePickerYear > currentYear || (revenuePickerYear === currentYear && i > currentMonth);
+                          const isSelected = revenueDate.year === revenuePickerYear && revenueDate.month === i;
+                          return (
+                            <button
+                              key={m}
+                              onClick={() => { setRevenueDate({ month: i, year: revenuePickerYear }); setShowRevenueDropdown(false); }}
+                              disabled={isFuture}
+                              className={`py-1.5 text-xs rounded-md text-center transition-colors 
+                                ${isFuture ? 'opacity-30 cursor-not-allowed text-neutral-500 bg-transparent' : 
+                                  isSelected ? 'bg-primary-600 text-white font-medium' : 
+                                  'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                                }
+                              `}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[
-                    { date: '1', revenue: 1200 }, { date: '5', revenue: 2100 }, { date: '10', revenue: 1800 }, 
-                    { date: '15', revenue: 2400 }, { date: '20', revenue: 3200 }, { date: '25', revenue: 2800 }, { date: '30', revenue: 3800 }
-                  ]}>
+                  <LineChart data={dynamicRevenueTrendData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
-                    <XAxis dataKey="date" tick={{fontSize: 12}} stroke="#a3a3a3" />
-                    <YAxis tick={{fontSize: 12}} stroke="#a3a3a3" tickFormatter={(v) => `$${v}`} />
-                    <RechartsTooltip formatter={(value) => [`$${value}`, 'Revenue']} />
-                    <Line type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} dot={{r: 4, fill: '#22c55e'}} activeDot={{r: 6}} />
+                    <XAxis dataKey="date" interval={0} tick={{ fontSize: 10, fill: '#737373' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12, fill: '#a3a3a3' }} stroke="#a3a3a3" tickFormatter={(v) => `$${v}`} axisLine={false} tickLine={false} />
+                    <RechartsTooltip cursor={{ fill: '#f5f5f5', opacity: 0.1 }} formatter={(value) => [`$${value}`, 'Revenue']} />
+                    <Line type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} dot={{r: 3}} activeDot={{r: 5}} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -434,15 +617,38 @@ export default function Dashboard() {
           4. Moderation Intelligence
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <StatCard label="Average Resolution Time" value={"4h 32m"} icon={Clock3} trend={{ value: 'Overall Avg', positive: true }} />
-          <StatCard label="SLA Breach Rate" value={"8.3%"} icon={AlertTriangle} trend={{ value: 'Past 30 Days (Threshold: 24h)', positive: false }} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <StatCard label="Average Resolution Time" value={"2.4 hrs"} icon={Clock} trend={{ value: 'Over all data', positive: true }} />
+          <StatCard label="SLA Breach Rate" value={"1.2%"} icon={AlertTriangle} trend={{ value: 'Current Month Only', positive: true }} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Pending Flags</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Pending Flags</h3>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowFlagsFilter(!showFlagsFilter)}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {flagsFilter}
+                  </button>
+                  {showFlagsFilter && (
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg py-1 z-50">
+                      {['Last 24 Hours', 'This Week', 'This Month', 'Overall'].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => { setFlagsFilter(opt); setShowFlagsFilter(false); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors ${flagsFilter === opt ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-neutral-700 dark:text-neutral-300'}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -472,59 +678,101 @@ export default function Dashboard() {
               </div>
             </div>
           </Card>
-
+          
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Flag Trend Growth (Current Month)</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Repeat Offenders Leaderboard</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-200 dark:border-neutral-800 text-left text-neutral-500">
+                      <th className="pb-2 font-medium w-12">#</th>
+                      <th className="pb-2 font-medium">User Name</th>
+                      <th className="pb-2 font-medium text-right">Flag Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { id: 'USR001', name: 'JohnDoe123', flags: 14 },
+                      { id: 'USR002', name: 'JaneSmith4', flags: 11 },
+                      { id: 'USR003', name: 'BadUser99', flags: 9 },
+                      { id: 'USR004', name: 'TrollMaster', flags: 7 },
+                      { id: 'USR005', name: 'SpamBot01', flags: 6 },
+                    ].map((offender, index) => (
+                      <tr key={index} className="border-b border-neutral-100 dark:border-neutral-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                        <td className="py-3 text-neutral-600 dark:text-neutral-400 font-mono text-xs">{index + 1}</td>
+                        <td className="py-3 font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                          <a href={`/users/${offender.id}`} className="hover:underline">{offender.name}</a>
+                        </td>
+                        <td className="py-3 text-neutral-900 dark:text-white text-right font-medium">{offender.flags}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Card>
+        </div>
+        
+        <div className="mt-4">
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Flag Trend</h3>
+                <div className="relative">
+                  <button 
+                    onClick={() => { setShowFlagTrendDropdown(!showFlagTrendDropdown); setFlagTrendPickerYear(flagTrendDate.year); }}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {monthFull[flagTrendDate.month]} {flagTrendDate.year}
+                  </button>
+                  {showFlagTrendDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-3 z-50">
+                      <div className="flex items-center justify-between mb-3 text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                        <button onClick={() => setFlagTrendPickerYear(y => y - 1)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"><ChevronLeft size={16} /></button>
+                        <span>{flagTrendPickerYear}</span>
+                        <button disabled={flagTrendPickerYear >= currentYear} onClick={() => setFlagTrendPickerYear(y => y + 1)} className={`p-1 rounded-md transition-colors ${flagTrendPickerYear >= currentYear ? 'opacity-30 cursor-not-allowed' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}><ChevronRight size={16} /></button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {monthShort.map((m, i) => {
+                          const isFuture = flagTrendPickerYear > currentYear || (flagTrendPickerYear === currentYear && i > currentMonth);
+                          const isSelected = flagTrendDate.year === flagTrendPickerYear && flagTrendDate.month === i;
+                          return (
+                            <button
+                              key={m}
+                              onClick={() => { setFlagTrendDate({ month: i, year: flagTrendPickerYear }); setShowFlagTrendDropdown(false); }}
+                              disabled={isFuture}
+                              className={`py-1.5 text-xs rounded-md text-center transition-colors 
+                                ${isFuture ? 'opacity-30 cursor-not-allowed text-neutral-500 bg-transparent' : 
+                                  isSelected ? 'bg-primary-600 text-white font-medium' : 
+                                  'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                                }
+                              `}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[
-                    { date: '1', flags: 12 }, { date: '5', flags: 18 }, { date: '10', flags: 25 }, 
-                    { date: '15', flags: 42 }, { date: '20', flags: 30 }, { date: '25', flags: 28 }, { date: '30', flags: 45 }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
-                    <XAxis dataKey="date" tick={{fontSize: 12}} stroke="#a3a3a3" />
-                    <YAxis tick={{fontSize: 12}} stroke="#a3a3a3" />
-                    <RechartsTooltip />
-                    <Line type="monotone" dataKey="flags" stroke="#ef4444" strokeWidth={2} dot={{r: 4, fill: '#ef4444'}} />
+                  <LineChart data={dynamicFlagTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#525252" opacity={0.2} />
+                    <XAxis dataKey="date" interval={0} tick={{ fontSize: 10, fill: '#737373' }} axisLine={false} tickLine={false} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#737373' }} />
+                    <RechartsTooltip cursor={{ fill: '#f5f5f5', opacity: 0.1 }} />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Line type="monotone" dataKey="raised" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} name="Raised Flags" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </Card>
         </div>
-
-        <Card>
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Repeat Offenders (Top 5)</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-neutral-200 dark:border-neutral-800">
-                    <th className="px-4 py-2 text-left font-medium text-neutral-600">#</th>
-                    <th className="px-4 py-2 text-left font-medium text-neutral-600">User Name</th>
-                    <th className="px-4 py-2 text-right font-medium text-neutral-600">Flag Count</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                  {[
-                    { rank: 1, name: 'JohnDoe123', flags: 14 },
-                    { rank: 2, name: 'JaneSmith4', flags: 11 },
-                    { rank: 3, name: 'BadUser99', flags: 9 },
-                    { rank: 4, name: 'TrollMaster', flags: 7 },
-                    { rank: 5, name: 'SpamBot01', flags: 6 },
-                  ].map((row) => (
-                    <tr key={row.rank} className="hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer text-neutral-900 dark:text-white">
-                      <td className="px-4 py-3">{row.rank}</td>
-                      <td className="px-4 py-3 font-medium text-primary-600 hover:text-primary-700">{row.name}</td>
-                      <td className="px-4 py-3 text-right">{row.flags}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </Card>
       </section>
 
       {/* SECTION 5: Wardrobe Intelligence */}
@@ -537,36 +785,138 @@ export default function Dashboard() {
           <StatCard label="Size Distribution" value={"M (45K)"} icon={Shirt} trend={{ value: 'Top & Bottom Wear Only', positive: true }} />
           <StatCard 
             label="Color Dominance Index" 
-            value={"#1A1A2E"} 
+            value={
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm" style={{ backgroundColor: '#1A1A2E' }} />
+                <span>#1A1A2E</span>
+              </div>
+            }
             icon={Palette} 
             trend={{ value: '4,210 items', positive: true }} 
           />
           <StatCard label="Silhouette Preference" value={"TBD"} icon={Shirt} trend={{ value: 'Details Pending' }} />
           <StatCard label="Avg Items per User" value={"14.3"} icon={Users} trend={{ value: 'Overall Platform', positive: true }} />
           <StatCard label="Avg Wardrobe Quotient" value={"63%"} icon={Award} trend={{ value: 'Overall Platform', positive: true }} />
-          <StatCard label="Total Wardrobes Created" value={"124,500"} icon={Shirt} trend={{ value: 'Overall Platform', positive: true }} />
           <StatCard label="Avg Items per Wardrobe" value={"11.6"} icon={Shirt} trend={{ value: 'Overall Platform', positive: true }} />
           <StatCard label="Cost Per Wear (CPW)" value={"$4.20"} icon={DollarSign} trend={{ value: 'Avg over priced items', positive: true }} />
           <StatCard label="Avg CPW (Platform)" value={"Android: $3.80 | iOS: $4.60"} icon={Smartphone} trend={{ value: 'Platform specific', positive: true }} />
-          <StatCard label="Color Trend Index (OOTD)" value={"#8B5E3C"} icon={Palette} trend={{ value: '6,840 OOTD inclusions', positive: true }} />
+          <StatCard 
+            label="Color Trend Index (OOTD)" 
+            value={
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm" style={{ backgroundColor: '#8B5E3C' }} />
+                <span>#8B5E3C</span>
+              </div>
+            }
+            icon={Palette} 
+            trend={{ value: '6,840 OOTD inclusions', positive: true }} 
+          />
           <StatCard label="Total Outfits with Prices" value={"4,210 (34.2%)"} icon={DollarSign} trend={{ value: 'User-entered only', positive: true }} />
+          
+          {/* Moved to end & spanning 2 columns to fix UI break and fill the 12th slot */}
+          <div className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex flex-col justify-between md:col-span-2 lg:col-span-2 relative z-10">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1.5">
+                  Total Wardrobes Created
+                </p>
+                <p className="text-2xl font-semibold text-neutral-900 dark:text-white mt-1">
+                  {wardrobeFilter === 'Today (records after 12:00 AM on same day)' ? '1,240' : 
+                   wardrobeFilter === 'Last 7 Days' ? '8,450' :
+                   wardrobeFilter === 'Last 30 Days' ? '34,200' : '124,500'}
+                </p>
+                <p className="text-xs mt-1.5 text-success-600 dark:text-success-400">
+                  Overall Platform
+                </p>
+              </div>
+
+              <div className="flex flex-col items-end shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-3">
+                  <Shirt className="w-5 h-5 text-neutral-600 dark:text-neutral-300" />
+                </div>
+                
+                {/* Filter Dropdown safely nested on the right */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowWardrobeFilter(!showWardrobeFilter)}
+                    className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-900 px-2.5 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1.5"
+                  >
+                    <span>
+                      {wardrobeFilter === 'Today (records after 12:00 AM on same day)' ? 'Today' : wardrobeFilter}
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 rotate-90 opacity-60" />
+                  </button>
+                  {showWardrobeFilter && (
+                    <div className="absolute right-0 top-full mt-1.5 w-64 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-xl py-1 z-50 overflow-hidden text-left">
+                      {['Today (records after 12:00 AM on same day)', 'Last 7 Days', 'Last 30 Days', 'Overall'].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => { setWardrobeFilter(opt); setShowWardrobeFilter(false); }}
+                          className={`w-full px-3.5 py-2.5 text-left text-xs transition-colors break-words whitespace-normal border-b last:border-0 border-neutral-100 dark:border-neutral-800 ${wardrobeFilter === opt ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/10 dark:text-primary-400 font-medium' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Wardrobe Quotient Trend</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Wardrobe Quotient Trend</h3>
+                <div className="relative">
+                  <button 
+                    onClick={() => { setShowWqTrendDropdown(!showWqTrendDropdown); setWqTrendPickerYear(wqTrendDate.year); }}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {monthFull[wqTrendDate.month]} {wqTrendDate.year}
+                  </button>
+                  {showWqTrendDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-3 z-50">
+                      <div className="flex items-center justify-between mb-3 text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                        <button onClick={() => setWqTrendPickerYear(y => y - 1)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"><ChevronLeft size={16} /></button>
+                        <span>{wqTrendPickerYear}</span>
+                        <button disabled={wqTrendPickerYear >= currentYear} onClick={() => setWqTrendPickerYear(y => y + 1)} className={`p-1 rounded-md transition-colors ${wqTrendPickerYear >= currentYear ? 'opacity-30 cursor-not-allowed' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}><ChevronRight size={16} /></button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {monthShort.map((m, i) => {
+                          const isFuture = wqTrendPickerYear > currentYear || (wqTrendPickerYear === currentYear && i > currentMonth);
+                          const isSelected = wqTrendDate.year === wqTrendPickerYear && wqTrendDate.month === i;
+                          return (
+                            <button
+                              key={m}
+                              onClick={() => { setWqTrendDate({ month: i, year: wqTrendPickerYear }); setShowWqTrendDropdown(false); }}
+                              disabled={isFuture}
+                              className={`py-1.5 text-xs rounded-md text-center transition-colors 
+                                ${isFuture ? 'opacity-30 cursor-not-allowed text-neutral-500 bg-transparent' : 
+                                  isSelected ? 'bg-primary-600 text-white font-medium' : 
+                                  'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                                }
+                              `}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[
-                    { date: '1', score: 60 }, { date: '5', score: 62 }, { date: '10', score: 61 }, 
-                    { date: '15', score: 64 }, { date: '20', score: 63 }, { date: '25', score: 65 }, { date: '30', score: 66 }
-                  ]}>
+                  <LineChart data={dynamicWqTrendData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
-                    <XAxis dataKey="date" tick={{fontSize: 12}} stroke="#a3a3a3" />
-                    <YAxis tick={{fontSize: 12}} stroke="#a3a3a3" domain={[0, 100]} />
-                    <RechartsTooltip formatter={(val) => [`${val}%`, 'WQ Score']} />
-                    <Line type="monotone" dataKey="score" stroke="#8b5cf6" strokeWidth={2} dot={{r: 4, fill: '#8b5cf6'}} />
+                    <XAxis dataKey="date" interval={0} tick={{ fontSize: 10, fill: '#737373' }} axisLine={false} tickLine={false} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#737373' }} domain={[0, 100]} />
+                    <RechartsTooltip cursor={{ fill: '#f5f5f5', opacity: 0.1 }} />
+                    <Line type="monotone" dataKey="score" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} name="Avg Score" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

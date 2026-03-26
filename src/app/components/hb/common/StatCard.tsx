@@ -7,10 +7,11 @@
 
 import { LucideIcon } from 'lucide-react';
 import { cn } from '../../ui/utils';
+import React from 'react';
 
 interface StatCardProps {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   icon?: LucideIcon;
   trend?: {
     value: string;
