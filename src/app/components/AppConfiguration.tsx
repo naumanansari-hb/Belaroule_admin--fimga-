@@ -18,6 +18,8 @@ export default function AppConfiguration() {
     tryonOption: 'limited' as 'limited' | 'unlimited',
     tryonLimit: '1',
     targetWear: '2',
+    iosCommission: '30',
+    androidCommission: '30',
     activities: [
       { id: '1', activity: 'Login', weight: '5%', cap: '7' },
       { id: '2', activity: 'OOTD', weight: '10%', cap: '14' },
@@ -91,6 +93,16 @@ export default function AppConfiguration() {
     const targetWearNum = parseFloat(formData.targetWear);
     if (!formData.targetWear.trim() || isNaN(targetWearNum) || targetWearNum <= 0) {
       newErrors.targetWear = 'Target Wear must be a positive number.';
+    }
+
+    const iosCommNum = parseFloat(formData.iosCommission);
+    if (!formData.iosCommission.trim() || isNaN(iosCommNum) || iosCommNum < 0 || iosCommNum > 100) {
+      newErrors.iosCommission = 'iOS Commission must be a number between 0 and 100.';
+    }
+
+    const androidCommNum = parseFloat(formData.androidCommission);
+    if (!formData.androidCommission.trim() || isNaN(androidCommNum) || androidCommNum < 0 || androidCommNum > 100) {
+      newErrors.androidCommission = 'Android Commission must be a number between 0 and 100.';
     }
 
     setErrors(newErrors);
@@ -413,6 +425,59 @@ export default function AppConfiguration() {
                   Platform constant used in circular score normalization (wears per item per month)
                 </p>
               </FormField>
+            </FormSection>
+          </div>
+        </div>
+
+        {/* 6. Payment Commission Settings */}
+        <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
+          <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+            <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
+              Payment Commission Settings
+            </h2>
+          </div>
+          <div className="p-6">
+            <FormSection>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField>
+                  <FormLabel htmlFor="iosCommission" required>iOS Commission (%)</FormLabel>
+                  <FormInput
+                    id="iosCommission"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.iosCommission}
+                    onChange={(e) => {
+                      setFormData({ ...formData, iosCommission: e.target.value });
+                      setErrors({ ...errors, iosCommission: '' });
+                    }}
+                    placeholder="0-100"
+                    className={errors.iosCommission ? 'border-error-500' : ''}
+                  />
+                  {errors.iosCommission && (
+                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.iosCommission}</p>
+                  )}
+                </FormField>
+                <FormField>
+                  <FormLabel htmlFor="androidCommission" required>Android Commission (%)</FormLabel>
+                  <FormInput
+                    id="androidCommission"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.androidCommission}
+                    onChange={(e) => {
+                      setFormData({ ...formData, androidCommission: e.target.value });
+                      setErrors({ ...errors, androidCommission: '' });
+                    }}
+                    placeholder="0-100"
+                    className={errors.androidCommission ? 'border-error-500' : ''}
+                  />
+                  {errors.androidCommission && (
+                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.androidCommission}</p>
+                  )}
+                </FormField>
+              </div>
             </FormSection>
           </div>
         </div>

@@ -5,9 +5,9 @@
  * Used in dashboards and overview pages
  */
 
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, RefreshCw } from 'lucide-react';
 import { cn } from '../../ui/utils';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface StatCardProps {
   label: string;
@@ -19,6 +19,7 @@ interface StatCardProps {
   };
   className?: string;
   valueClassName?: string;
+  onRefresh?: () => void;
 }
 
 export function StatCard({ 
@@ -27,18 +28,41 @@ export function StatCard({
   icon: Icon,
   trend,
   className,
-  valueClassName 
+  valueClassName,
+  onRefresh
 }: StatCardProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    if (onRefresh) onRefresh();
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 800);
+  };
+
   return (
     <div className={cn(
-      "p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950",
+      "p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 group",
       className
     )}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1.5">
-            {label}
-          </p>
+          <div className="flex items-center gap-2 mb-1.5">
+            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+              {label}
+            </p>
+            <button 
+              onClick={handleRefresh}
+              className={cn(
+                "p-1 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100",
+                isRefreshing && "opacity-100"
+              )}
+              title="Refresh metric"
+            >
+              <RefreshCw className={cn("w-3 h-3", isRefreshing && "animate-spin text-primary-600 dark:text-primary-400")} />
+            </button>
+          </div>
           <p className={cn(
             "text-2xl font-semibold text-neutral-900 dark:text-white",
             valueClassName

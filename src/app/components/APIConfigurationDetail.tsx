@@ -39,9 +39,6 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
     isDefaultModel: configuration?.isDefaultModel || false,
     apiKey: '',
     keyLabel: '',
-    timeout: '30000',
-    maxTokens: '2048',
-    temperature: '0.7',
     status: configuration?.status || 'active' as 'active' | 'inactive',
   });
   const [showApiKey, setShowApiKey] = useState(false);
@@ -68,18 +65,6 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
 
     if (isCreating && !formData.apiKey.trim()) {
       newErrors.apiKey = 'API Key is required';
-    }
-
-    if (formData.timeout && (parseInt(formData.timeout) < 1000 || parseInt(formData.timeout) > 120000)) {
-      newErrors.timeout = 'Timeout must be between 1000 and 120000 ms';
-    }
-
-    if (formData.maxTokens && (parseInt(formData.maxTokens) < 1 || parseInt(formData.maxTokens) > 100000)) {
-      newErrors.maxTokens = 'Max tokens must be between 1 and 100000';
-    }
-
-    if (formData.temperature && (parseFloat(formData.temperature) < 0 || parseFloat(formData.temperature) > 1)) {
-      newErrors.temperature = 'Temperature must be between 0.0 and 1.0';
     }
 
     setErrors(newErrors);
@@ -320,78 +305,6 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
                     onChange={(e) => setFormData({ ...formData, keyLabel: e.target.value })}
                     placeholder="e.g., Production Key"
                   />
-                </FormField>
-              </div>
-            </FormSection>
-          </div>
-        </div>
-
-        {/* Runtime Controls Section */}
-        <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
-          <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
-              Runtime Controls
-            </h2>
-          </div>
-          <div className="p-6">
-            <FormSection>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Timeout */}
-                <FormField>
-                  <FormLabel htmlFor="timeout">Timeout (ms)</FormLabel>
-                  <FormInput
-                    id="timeout"
-                    type="number"
-                    value={formData.timeout}
-                    onChange={(e) => {
-                      setFormData({ ...formData, timeout: e.target.value });
-                      setErrors({ ...errors, timeout: '' });
-                    }}
-                    placeholder="30000"
-                    className={errors.timeout ? 'border-error-500' : ''}
-                  />
-                  {errors.timeout && (
-                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.timeout}</p>
-                  )}
-                </FormField>
-
-                {/* Max Tokens */}
-                <FormField>
-                  <FormLabel htmlFor="maxTokens">Max Tokens</FormLabel>
-                  <FormInput
-                    id="maxTokens"
-                    type="number"
-                    value={formData.maxTokens}
-                    onChange={(e) => {
-                      setFormData({ ...formData, maxTokens: e.target.value });
-                      setErrors({ ...errors, maxTokens: '' });
-                    }}
-                    placeholder="2048"
-                    className={errors.maxTokens ? 'border-error-500' : ''}
-                  />
-                  {errors.maxTokens && (
-                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.maxTokens}</p>
-                  )}
-                </FormField>
-
-                {/* Temperature */}
-                <FormField>
-                  <FormLabel htmlFor="temperature">Temperature (0.0-1.0)</FormLabel>
-                  <FormInput
-                    id="temperature"
-                    type="number"
-                    step="0.1"
-                    value={formData.temperature}
-                    onChange={(e) => {
-                      setFormData({ ...formData, temperature: e.target.value });
-                      setErrors({ ...errors, temperature: '' });
-                    }}
-                    placeholder="0.7"
-                    className={errors.temperature ? 'border-error-500' : ''}
-                  />
-                  {errors.temperature && (
-                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.temperature}</p>
-                  )}
                 </FormField>
               </div>
             </FormSection>

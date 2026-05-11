@@ -13,6 +13,9 @@ import UserManagement from "./components/UserManagement";
 import DeletedUsersManagement from "./components/DeletedUsersManagement";
 import DeletedUserDetail from "./components/DeletedUserDetail";
 import RoleManagement from "./components/RoleManagement";
+import ModelMasterManagement from "./components/ModelMasterManagement";
+import AddModelMaster from "./components/AddModelMaster";
+import ViewModelMaster from "./components/ViewModelMaster";
 import CategoryManagement from "./components/CategoryManagement";
 import BodyShapeManagement from "./components/BodyShapeManagement";
 import AgeGroupManagement from "./components/AgeGroupManagement";
@@ -76,6 +79,7 @@ function AppContent() {
   const [selectedEmailId, setSelectedEmailId] = useState<string | undefined>(undefined);
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | undefined>(undefined);
   const [selectedDeletedUserId, setSelectedDeletedUserId] = useState<string | undefined>(undefined);
+  const [selectedModelId, setSelectedModelId] = useState<string | undefined>(undefined);
 
   const [userRole, setUserRole] = useState<'super-admin' | 'sub-admin'>('super-admin');
 
@@ -206,6 +210,18 @@ function AppContent() {
             deletedUserId={selectedDeletedUserId}
             onBack={() => setCurrentPage('deleted-users')}
           />
+        ) : currentPage === "model-master" ? (
+          <ModelMasterManagement 
+            onNavigate={handleNavigate}
+            onViewDetail={(id) => {
+              setSelectedModelId(id);
+              setCurrentPage('view-model-master');
+            }}
+          />
+        ) : currentPage === "add-model-master" ? (
+          <AddModelMaster onNavigate={handleNavigate} />
+        ) : currentPage === "view-model-master" ? (
+          <ViewModelMaster modelId={selectedModelId} onNavigate={handleNavigate} />
         ) : currentPage === "roles" ? (
           <RoleManagement />
         ) : currentPage === "categories" ? (

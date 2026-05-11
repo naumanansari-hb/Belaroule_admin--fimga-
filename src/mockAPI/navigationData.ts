@@ -116,6 +116,12 @@ export const getNavigationData = (
       superAdminOnly: true,
       subItems: [
         {
+          id: "model-master",
+          label: "Model Master",
+          onClick: () => onNavigate("model-master"),
+          active: currentPage === "model-master",
+        },
+        {
           id: "roles",
           label: "Roles",
           onClick: () => onNavigate("roles"),
@@ -241,7 +247,7 @@ export const getNavigationData = (
       subItems: [
         {
           id: "prompt-api-settings",
-          label: "Prompt and API setting",
+          label: "Prompt Configurations",
           onClick: () => onNavigate("prompt-api-settings"),
           active: currentPage === "prompt-api-settings",
         },

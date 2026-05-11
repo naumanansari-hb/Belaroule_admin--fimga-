@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, FileText, Pen, Clock, RefreshCw, Eye, X } from 'lucide-react';
 import { PrimaryButton, SecondaryButton } from './hb/listing';
 import {
@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import '@/styles/quill-custom.css';
+import { ModelMaster } from '../types/modelMaster';
+import { mockModels } from './ModelMasterManagement';
 
 interface Prompt {
   id: string;
@@ -47,6 +49,10 @@ export default function PromptDetail({
     promptContent: prompt.promptContent || '',
     status: prompt.status,
     promptNote: '',
+    modelId: (prompt as any).modelUsed || '',
+    timeout: '30000',
+    maxTokens: '2048',
+    temperature: '0.7',
   });
 
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
@@ -471,6 +477,59 @@ export default function PromptDetail({
               </div>
             </div>
 
+            {/* Model Configuration Section */}
+            <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
+              <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+                <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
+                  Model Configuration
+                </h2>
+              </div>
+              <div className="p-6">
+                <FormSection>
+                  <FormField>
+                    <FormLabel htmlFor="modelId" required>Select Model</FormLabel>
+                    <FormSelect
+                      id="modelId"
+                      value={formData.modelId}
+                      onChange={(e) => setFormData({ ...formData, modelId: e.target.value })}
+                    >
+                      <option value="">Select a model</option>
+                      {mockModels.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.id} ({model.provider})
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </FormField>
+                  
+                  {formData.modelId && (() => {
+                    const selectedModel = mockModels.find(m => m.id === formData.modelId);
+                    if (!selectedModel) return null;
+                    
+                    const inputCost = selectedModel.inputCosts[0]?.costPerMillion || 0;
+                    const outputCost = selectedModel.outputCosts[0]?.costPerMillion || 0;
+                    
+                    return (
+                      <div className="mt-4 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800 rounded-lg px-4 py-3">
+                        <h3 className="text-sm font-medium text-primary-900 dark:text-primary-100 mb-2">Token Consumption Costs</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-primary-600 dark:text-primary-400 font-medium">Input:</span>
+                            <span className="text-neutral-700 dark:text-neutral-300">${inputCost.toFixed(2)} per 1M tokens</span>
+                          </div>
+                          <div className="hidden sm:block text-primary-300 dark:text-primary-700">|</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-primary-600 dark:text-primary-400 font-medium">Output:</span>
+                            <span className="text-neutral-700 dark:text-neutral-300">${outputCost.toFixed(2)} per 1M tokens</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </FormSection>
+              </div>
+            </div>
+
             {/* Prompt Content Section */}
             <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
               <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
@@ -575,6 +634,57 @@ export default function PromptDetail({
                     <strong>Important:</strong> Variables cannot be edited, renamed, or deleted. Unknown variables will block save.
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Runtime Controls Section */}
+            <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
+              <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+                <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
+                  Runtime Controls
+                </h2>
+              </div>
+              <div className="p-6">
+                <FormSection>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Timeout */}
+                    <FormField>
+                      <FormLabel htmlFor="timeout">Timeout (ms)</FormLabel>
+                      <FormInput
+                        id="timeout"
+                        type="number"
+                        value={formData.timeout}
+                        onChange={(e) => setFormData({ ...formData, timeout: e.target.value })}
+                        placeholder="30000"
+                      />
+                    </FormField>
+
+                    {/* Max Tokens */}
+                    <FormField>
+                      <FormLabel htmlFor="maxTokens">Max Tokens</FormLabel>
+                      <FormInput
+                        id="maxTokens"
+                        type="number"
+                        value={formData.maxTokens}
+                        onChange={(e) => setFormData({ ...formData, maxTokens: e.target.value })}
+                        placeholder="2048"
+                      />
+                    </FormField>
+
+                    {/* Temperature */}
+                    <FormField>
+                      <FormLabel htmlFor="temperature">Temperature (0.0-1.0)</FormLabel>
+                      <FormInput
+                        id="temperature"
+                        type="number"
+                        step="0.1"
+                        value={formData.temperature}
+                        onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
+                        placeholder="0.7"
+                      />
+                    </FormField>
+                  </div>
+                </FormSection>
               </div>
             </div>
 

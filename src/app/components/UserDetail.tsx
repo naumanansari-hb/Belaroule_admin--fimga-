@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Mail, 
   Globe, 
@@ -105,6 +105,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       wardrobeId: 'W001',
       timesWorn: 10,
       daysSinceLastWorn: 2,
+      description: 'A beautiful summer dress perfect for beach outings and sunny days.',
     },
     {
       id: 'WRD002',
@@ -121,6 +122,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       wardrobeId: 'W002',
       timesWorn: 20,
       daysSinceLastWorn: 1,
+      description: 'Classic and versatile denim jeans that go with any outfit.',
     },
     {
       id: 'WRD003',
@@ -137,6 +139,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       wardrobeId: 'W003',
       timesWorn: 5,
       daysSinceLastWorn: 15,
+      description: 'Comfortable and stylish white sneakers for daily wear.',
     },
     {
       id: 'WRD004',
@@ -153,6 +156,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       wardrobeId: 'W004',
       timesWorn: 1,
       daysSinceLastWorn: 45,
+      description: 'Premium leather jacket offering a sleek and edgy look.',
     },
     {
       id: 'WRD005',
@@ -168,6 +172,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       wardrobeName: 'Summer Collection',
       wardrobeId: 'W001',
       timesWorn: 0,
+      description: 'Wide-brim straw hat to protect from the sun in style.',
     },
     {
       id: 'WRD006',
@@ -184,6 +189,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       wardrobeId: 'W005',
       timesWorn: 2,
       daysSinceLastWorn: 30,
+      description: 'Elegant gold necklace to add a touch of luxury to your look.',
     },
   ];
 
@@ -365,6 +371,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       dateTime: '2026-01-27 18:20:15',
       era: 'Modern Classic',
       occasion: 'Business Casual',
+      season: 'Spring',
       hairStyle: 'Low Bun',
       bodyShape: 'Hourglass',
       mood: 'Confident',
@@ -383,6 +390,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       dateTime: '2026-01-27 10:45:30',
       era: 'Streetwear',
       occasion: 'Casual Hangout',
+      season: 'Autumn',
       hairStyle: 'Messy Hair',
       bodyShape: 'Rectangle',
       mood: 'Relaxed',
@@ -401,6 +409,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       dateTime: '2026-01-26 14:30:22',
       era: 'Y2K Edge',
       occasion: 'Skatepark',
+      season: 'Summer',
       hairStyle: 'Textured Waves',
       bodyShape: 'Inverted Triangle',
       mood: 'Energetic',
@@ -419,6 +428,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       dateTime: '2026-01-26 09:15:48',
       era: 'Bohemian',
       occasion: 'Brunch',
+      season: 'Summer',
       hairStyle: 'Loose Waves',
       bodyShape: 'Apple',
       mood: 'Joyful',
@@ -437,6 +447,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       dateTime: '2026-01-25 16:40:12',
       era: 'Elegant Chic',
       occasion: 'Dinner Date',
+      season: 'Winter',
       hairStyle: 'Sleek Straight',
       bodyShape: 'Pear',
       mood: 'Romantic',
@@ -455,6 +466,7 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
       dateTime: '2026-01-25 11:20:35',
       era: 'Grunge Punk',
       occasion: 'Concert',
+      season: 'Autumn',
       hairStyle: 'Textured Shag',
       bodyShape: 'Inverted Triangle',
       mood: 'Rebellious',
@@ -1090,16 +1102,6 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
               Rewards
             </button>
             <button
-              onClick={() => setActiveTab('virtualtryon')}
-              className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'virtualtryon'
-                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-              }`}
-            >
-              Virtual Try Ons
-            </button>
-            <button
               onClick={() => setActiveTab('ootd')}
               className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
                 activeTab === 'ootd'
@@ -1108,6 +1110,16 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
               }`}
             >
               OOTD
+            </button>
+            <button
+              onClick={() => setActiveTab('virtualtryon')}
+              className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'virtualtryon'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+              }`}
+            >
+              Virtual Try Ons
             </button>
             <button
               onClick={() => setActiveTab('pastwardrobeindex')}
@@ -1422,6 +1434,12 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
                             <span className="text-neutral-500 dark:text-neutral-400">Wardrobe Name</span>
                             <span className="text-neutral-900 dark:text-white">{item.wardrobeName}</span>
                           </div>
+                          {(item as any).description && (
+                            <div className="flex flex-col text-xs mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                              <span className="text-neutral-500 dark:text-neutral-400 mb-1">Description</span>
+                              <span className="text-neutral-900 dark:text-white leading-relaxed">{(item as any).description}</span>
+                            </div>
+                          )}
                           <div className="pt-2 mt-2 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
                             {(() => {
                               const zone = getWardrobeZone(item);
@@ -1703,6 +1721,10 @@ export default function UserDetail({ user, moodHistory, onBack }: UserDetailProp
                             <div className="flex flex-col text-xs">
                               <span className="text-neutral-500 dark:text-neutral-400">Occasion</span>
                               <span className="text-neutral-900 dark:text-white font-medium">{item.occasion}</span>
+                            </div>
+                            <div className="flex flex-col text-xs">
+                              <span className="text-neutral-500 dark:text-neutral-400">Season</span>
+                              <span className="text-neutral-900 dark:text-white font-medium">{(item as any).season || 'N/A'}</span>
                             </div>
                             <div className="flex flex-col text-xs">
                               <span className="text-neutral-500 dark:text-neutral-400">Hair Style</span>

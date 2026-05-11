@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Users,
   UserMinus,
@@ -51,7 +51,8 @@ import {
   LabelList,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  ReferenceLine
 } from 'recharts';
 
 // --- MOCK DATA ---
@@ -67,6 +68,32 @@ const funnelData = [
   { name: 'Wardrobe Upload', value: 6400, fill: '#a5b4fc' },
   { name: 'First 3 OOTDs', value: 4200, fill: '#c7d2fe' },
 ];
+
+// 2. Engagement Score Index Mock Data & Logic
+const rawEngagementData = [
+  { id: 'User A', likes: 500, comments: 120, saves: 80, shares: 40, posts: 30, followers: 1000, status: 'active', role: 'user' },
+  { id: 'User B', likes: 200, comments: 50, saves: 30, shares: 10, posts: 15, followers: 300, status: 'active', role: 'user' },
+  { id: 'User C', likes: 800, comments: 200, saves: 100, shares: 50, posts: 40, followers: 2000, status: 'active', role: 'user' },
+  { id: 'User D', likes: 0, comments: 0, saves: 0, shares: 0, posts: 0, followers: 0, status: 'active', role: 'user' }, // Excluded (0 followers)
+  { id: 'User E', likes: 100, comments: 10, saves: 5, shares: 2, posts: 1, followers: 50, status: 'deleted', role: 'user' }, // Excluded
+  { id: 'User F', likes: 50, comments: 5, saves: 2, shares: 1, posts: 0, followers: 10, status: 'active', role: 'guest' } // Excluded
+];
+
+const eligibleUsers = rawEngagementData.filter(u => 
+  u.role !== 'guest' && 
+  u.followers > 0 && 
+  u.status === 'active'
+);
+
+const userScores = eligibleUsers.map(u => 
+  ((1 * u.likes) + (3 * u.comments) + (4 * u.saves) + (5 * u.shares) + (6 * u.posts)) / u.followers
+);
+
+const platformScore = userScores.length > 0 
+  ? userScores.reduce((sum, score) => sum + score, 0) / userScores.length 
+  : 0;
+
+const engagementScoreIndex = platformScore * 100;
 
 const formatNumber = (num: number, isCurrency = false): string => {
   if (num === 0) return isCurrency ? '$0' : '0';
@@ -86,9 +113,31 @@ export default function Dashboard() {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  const [refreshingItems, setRefreshingItems] = useState<Record<string, boolean>>({});
+  const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
+
+  const handleLocalRefresh = (itemId: string) => {
+    setRefreshingItems(prev => ({ ...prev, [itemId]: true }));
+    setTimeout(() => {
+      setRefreshingItems(prev => ({ ...prev, [itemId]: false }));
+      setRefreshKeys(prev => ({ ...prev, [itemId]: (prev[itemId] || 0) + 1 }));
+    }, 800);
+  };
+
+  const LocalRefreshButton = ({ itemId }: { itemId: string }) => (
+    <button 
+      onClick={() => handleLocalRefresh(itemId)}
+      className="p-1 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 transition-all ml-2"
+      title="Refresh data"
+    >
+      <RefreshCw className={`w-3.5 h-3.5 ${refreshingItems[itemId] ? "animate-spin text-primary-600 dark:text-primary-400" : ""}`} />
+    </button>
+  );
+  
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
+  const currentDay = currentDate.getDate();
   
   const [retentionDate, setRetentionDate] = useState({ month: currentMonth, year: currentYear });
   const [pickerYear, setPickerYear] = useState(currentYear);
@@ -115,6 +164,11 @@ export default function Dashboard() {
   const [wqTrendPickerYear, setWqTrendPickerYear] = useState(currentYear);
   const [showWqTrendDropdown, setShowWqTrendDropdown] = useState(false);
 
+  const [followerTrendDate, setFollowerTrendDate] = useState({ month: currentMonth, year: currentYear });
+  const [followerTrendPickerYear, setFollowerTrendPickerYear] = useState(currentYear);
+  const [showFollowerTrendDropdown, setShowFollowerTrendDropdown] = useState(false);
+
+
   const monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -138,32 +192,69 @@ export default function Dashboard() {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  const dynamicFlagTrendData = Array.from({ length: getDaysInMonth(flagTrendDate.month, flagTrendDate.year) }).map((_, i) => {
-    // Generate organic-looking curve data per day
-    const baseRaised = 35 + Math.sin(i * 0.4) * 15;
-    return {
-      date: (i + 1).toString(),
-      raised: Math.max(0, Math.floor(baseRaised + (Math.random() * 10)))
-    };
-  });
+  const dynamicFlagTrendData = useMemo(() => {
+    return Array.from({ length: getDaysInMonth(flagTrendDate.month, flagTrendDate.year) }).map((_, i) => {
+      // Generate organic-looking curve data per day
+      const baseRaised = 35 + Math.sin(i * 0.4) * 15;
+      return {
+        date: (i + 1).toString(),
+        raised: Math.max(0, Math.floor(baseRaised + (Math.random() * 10)))
+      };
+    });
+  }, [flagTrendDate, refreshKeys['flagTrend']]);
 
-  const dynamicWqTrendData = Array.from({ length: getDaysInMonth(wqTrendDate.month, wqTrendDate.year) }).map((_, i) => {
-    // Generate organic-looking curve data per day
-    const wqScore = 63 + Math.sin(i * 0.4) * 4;
-    return {
-      date: (i + 1).toString(),
-      score: Math.max(0, Math.min(100, Math.floor(wqScore + (Math.random() * 6 - 3))))
-    };
-  });
+  const dynamicWqTrendData = useMemo(() => {
+    return Array.from({ length: getDaysInMonth(wqTrendDate.month, wqTrendDate.year) }).map((_, i) => {
+      // Generate organic-looking curve data per day
+      const wqScore = 63 + Math.sin(i * 0.4) * 4;
+      return {
+        date: (i + 1).toString(),
+        score: Math.max(0, Math.min(100, Math.floor(wqScore + (Math.random() * 6 - 3))))
+      };
+    });
+  }, [wqTrendDate, refreshKeys['wqTrend']]);
 
-  const dynamicRevenueTrendData = Array.from({ length: getDaysInMonth(revenueDate.month, revenueDate.year) }).map((_, i) => {
-    // Generate organic-looking curve data for revenue per day
-    const baseRevenue = 450 + Math.sin(i * 0.5) * 150 + (i * 10);
-    return {
-      date: (i + 1).toString(),
-      revenue: Math.max(0, Math.floor(baseRevenue + (Math.random() * 100 - 50)))
-    };
-  });
+  const dynamicFollowerTrendData = useMemo(() => {
+    return Array.from({ length: getDaysInMonth(followerTrendDate.month, followerTrendDate.year) }).map((_, i) => {
+      const isFuture = (followerTrendDate.year > currentYear) || (followerTrendDate.year === currentYear && followerTrendDate.month > currentMonth) || (followerTrendDate.year === currentYear && followerTrendDate.month === currentMonth && i >= currentDay);
+      if (isFuture) return null; // Don't plot future dates
+
+      const date = i + 1;
+      // Generate a growth rate that goes positive and negative
+      let baseGrowth = Math.sin(date * 0.4) * 1.5 + (Math.random() - 0.4) * 1.5;
+      
+      // Approximate counts to match the growth rate
+      const startFollowers = 10000 + date * 80 + Math.floor(Math.random() * 100);
+      // If baseGrowth is 1.5%, that means net = 150.
+      const net = Math.floor((baseGrowth / 100) * startFollowers);
+      // Let's create some realistic new/lost combos
+      const newFollowers = Math.max(0, net + Math.floor(Math.random() * 50) + 10);
+      const lostFollowers = Math.max(0, newFollowers - net);
+      
+      // Recalculate exact growth
+      const exactGrowth = ((newFollowers - lostFollowers) / startFollowers) * 100;
+
+      return {
+        date: date.toString(),
+        growth: parseFloat(exactGrowth.toFixed(2)),
+        newFollowers,
+        lostFollowers,
+        startFollowers,
+        todayTotal: startFollowers + newFollowers - lostFollowers
+      };
+    }).filter(Boolean);
+  }, [followerTrendDate, currentYear, currentMonth, currentDay, refreshKeys['followerTrend']]);
+
+  const dynamicRevenueTrendData = useMemo(() => {
+    return Array.from({ length: getDaysInMonth(revenueDate.month, revenueDate.year) }).map((_, i) => {
+      // Generate organic-looking curve data for revenue per day
+      const baseRevenue = 450 + Math.sin(i * 0.5) * 150 + (i * 10);
+      return {
+        date: (i + 1).toString(),
+        revenue: Math.max(0, Math.floor(baseRevenue + (Math.random() * 100 - 50)))
+      };
+    });
+  }, [revenueDate, refreshKeys['revenueTrend']]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -228,7 +319,10 @@ export default function Dashboard() {
           <Card>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Retention Cohorts</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Retention Cohorts</h3>
+                  <LocalRefreshButton itemId="retention" />
+                </div>
                 <div className="relative">
                   <button 
                     onClick={() => { setShowRetentionDropdown(!showRetentionDropdown); setPickerYear(retentionDate.year); }}
@@ -294,8 +388,11 @@ export default function Dashboard() {
           </Card>
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Activation Funnel (Past 7 Days)</h3>
-              <div className="h-48 w-full flex items-center justify-center">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Activation Funnel (Past 7 Days)</h3>
+                <LocalRefreshButton itemId="funnel" />
+              </div>
+              <div className="h-48 w-full flex items-center justify-center" key={refreshKeys['funnel']}>
                  <ResponsiveContainer width="100%" height="100%">
                    <FunnelChart margin={{ top: 20, right: 120, bottom: 20, left: 20 }}>
                      <RechartsTooltip cursor={{ fill: '#f5f5f5', opacity: 0.1 }} />
@@ -330,6 +427,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <Percent className="w-4 h-4 text-primary-500" />
                   <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Platform Commission</h3>
+                  <LocalRefreshButton itemId="commission" />
                 </div>
                 <div className="relative">
                   <button 
@@ -354,7 +452,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="grid grid-cols-2 gap-4 mt-2" key={refreshKeys['commission']}>
                 <div>
                   <h4 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">$4,520.00</h4>
                   <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">iOS (30% Fee)</p>
@@ -372,7 +470,10 @@ export default function Dashboard() {
           <Card>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Revenue Trend Chart</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Revenue Trend Chart</h3>
+                  <LocalRefreshButton itemId="revenueTrend" />
+                </div>
                 <div className="relative">
                   <button 
                     onClick={() => { setShowRevenueDropdown(!showRevenueDropdown); setRevenuePickerYear(revenueDate.year); }}
@@ -429,7 +530,10 @@ export default function Dashboard() {
           <Card>
             <div className="p-4">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">AI Utilization / Burned Out</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">AI Utilization / Burned Out</h3>
+                  <LocalRefreshButton itemId="aiUtilization" />
+                </div>
                 <div className="relative">
                   <button 
                     onClick={() => setShowAiFilter(!showAiFilter)}
@@ -453,7 +557,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-6" key={refreshKeys['aiUtilization']}>
                 {/* Tokens Burnt */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -626,7 +730,10 @@ export default function Dashboard() {
           <Card>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Pending Flags</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Pending Flags</h3>
+                  <LocalRefreshButton itemId="pendingFlags" />
+                </div>
                 <div className="relative">
                   <button 
                     onClick={() => setShowFlagsFilter(!showFlagsFilter)}
@@ -681,8 +788,11 @@ export default function Dashboard() {
           
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Repeat Offenders Leaderboard</h3>
-              <div className="overflow-x-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Repeat Offenders Leaderboard</h3>
+                <LocalRefreshButton itemId="repeatOffenders" />
+              </div>
+              <div className="overflow-x-auto" key={refreshKeys['repeatOffenders']}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-neutral-200 dark:border-neutral-800 text-left text-neutral-500">
@@ -718,7 +828,10 @@ export default function Dashboard() {
           <Card>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Flag Trend</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Flag Trend</h3>
+                  <LocalRefreshButton itemId="flagTrend" />
+                </div>
                 <div className="relative">
                   <button 
                     onClick={() => { setShowFlagTrendDropdown(!showFlagTrendDropdown); setFlagTrendPickerYear(flagTrendDate.year); }}
@@ -814,12 +927,13 @@ export default function Dashboard() {
           <StatCard label="Total Outfits with Prices" value={"4,210 (34.2%)"} icon={DollarSign} trend={{ value: 'User-entered only', positive: true }} />
           
           {/* Moved to end & spanning 2 columns to fix UI break and fill the 12th slot */}
-          <div className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex flex-col justify-between md:col-span-2 lg:col-span-2 relative z-10">
+          <div className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex flex-col justify-between md:col-span-2 lg:col-span-2 relative z-10" key={refreshKeys['totalWardrobes']}>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1.5">
+                <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1.5 flex items-center gap-2">
                   Total Wardrobes Created
-                </p>
+                  <LocalRefreshButton itemId="totalWardrobes" />
+                </div>
                 <p className="text-2xl font-semibold text-neutral-900 dark:text-white mt-1">
                   {wardrobeFilter === 'Today (records after 12:00 AM on same day)' ? '1,240' : 
                    wardrobeFilter === 'Last 7 Days' ? '8,450' :
@@ -869,7 +983,10 @@ export default function Dashboard() {
           <Card>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Wardrobe Quotient Trend</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Wardrobe Quotient Trend</h3>
+                  <LocalRefreshButton itemId="wqTrend" />
+                </div>
                 <div className="relative">
                   <button 
                     onClick={() => { setShowWqTrendDropdown(!showWqTrendDropdown); setWqTrendPickerYear(wqTrendDate.year); }}
@@ -925,8 +1042,11 @@ export default function Dashboard() {
 
           <Card>
             <div className="p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Brand-Level CPW</h3>
-               <div className="overflow-x-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Brand-Level CPW</h3>
+                <LocalRefreshButton itemId="brandCPW" />
+              </div>
+               <div className="overflow-x-auto" key={refreshKeys['brandCPW']}>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-neutral-200 dark:border-neutral-800">
@@ -969,45 +1089,169 @@ export default function Dashboard() {
           6. Community & Virality
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Engagement Score Index" value={"TBD"} icon={HeartPulse} trend={{ value: 'Details Pending' }} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <StatCard label="Engagement Score Index" value={`${Math.round(engagementScoreIndex)}%`} icon={HeartPulse} trend={{ value: 'Lifetime Platform Avg', positive: true }} />
           <StatCard label="Share Rate" value={"2.4"} icon={Share2} trend={{ value: 'Shares per post', positive: true }} />
-          <StatCard label="Follower Growth Rate" value={"TBD"} icon={TrendingUp} trend={{ value: 'Details Pending' }} />
         </div>
 
-        <Card>
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Top Influencers (by Engagement Ratio)</h3>
-             <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-neutral-200 dark:border-neutral-800">
-                        <th className="px-4 py-2 text-left font-medium text-neutral-600">User Name</th>
-                        <th className="px-4 py-2 text-right font-medium text-neutral-600">Followers</th>
-                        <th className="px-4 py-2 text-right font-medium text-neutral-600">Total Engagement</th>
-                        <th className="px-4 py-2 text-right font-medium text-neutral-600">Ratio</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                      {[
-                        { name: 'FashionQueen99', followers: 15400, eng: 45200, ratio: '2.93' },
-                        { name: 'OOTD_Daily', followers: 8200, eng: 21400, ratio: '2.60' },
-                        { name: 'StyleGuru', followers: 4500, eng: 11200, ratio: '2.48' },
-                        { name: 'TrendSetter', followers: 12000, eng: 28500, ratio: '2.37' },
-                        { name: 'VintageVibes', followers: 6400, eng: 14200, ratio: '2.21' },
-                      ].map((row) => (
-                        <tr key={row.name} className="hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer text-neutral-900 dark:text-white">
-                          <td className="px-4 py-3 font-medium text-primary-600 hover:text-primary-700">{row.name}</td>
-                          <td className="px-4 py-3 text-right">{row.followers.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">{row.eng.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">{row.ratio}</td>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Top Influencers (by Engagement Ratio)</h3>
+                <LocalRefreshButton itemId="topInfluencers" />
+              </div>
+               <div className="overflow-x-auto" key={refreshKeys['topInfluencers']}>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-neutral-200 dark:border-neutral-800">
+                          <th className="px-4 py-2 text-left font-medium text-neutral-600">User Name</th>
+                          <th className="px-4 py-2 text-right font-medium text-neutral-600">Followers</th>
+                          <th className="px-4 py-2 text-right font-medium text-neutral-600">Total Engagement</th>
+                          <th className="px-4 py-2 text-right font-medium text-neutral-600">Ratio</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {[
+                          { name: 'FashionQueen99', followers: 15400, eng: 45200, ratio: '2.93' },
+                          { name: 'OOTD_Daily', followers: 8200, eng: 21400, ratio: '2.60' },
+                          { name: 'StyleGuru', followers: 4500, eng: 11200, ratio: '2.48' },
+                          { name: 'TrendSetter', followers: 12000, eng: 28500, ratio: '2.37' },
+                          { name: 'VintageVibes', followers: 6400, eng: 14200, ratio: '2.21' },
+                        ].map((row) => (
+                          <tr key={row.name} className="hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer text-neutral-900 dark:text-white">
+                            <td className="px-4 py-3 font-medium text-primary-600 hover:text-primary-700">{row.name}</td>
+                            <td className="px-4 py-3 text-right">{row.followers.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right">{row.eng.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right">{row.ratio}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Follower Growth Rate</h3>
+                  <LocalRefreshButton itemId="followerTrend" />
                 </div>
-          </div>
-        </Card>
+                <div className="relative">
+                  <button 
+                    onClick={() => { setShowFollowerTrendDropdown(!showFollowerTrendDropdown); setFollowerTrendPickerYear(followerTrendDate.year); }}
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-md flex items-center gap-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {monthFull[followerTrendDate.month]} {followerTrendDate.year}
+                  </button>
+                  {showFollowerTrendDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-3 z-50">
+                      <div className="flex items-center justify-between mb-3 text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                        <button onClick={() => setFollowerTrendPickerYear(y => y - 1)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"><ChevronLeft size={16} /></button>
+                        <span>{followerTrendPickerYear}</span>
+                        <button disabled={followerTrendPickerYear >= currentYear} onClick={() => setFollowerTrendPickerYear(y => y + 1)} className={`p-1 rounded-md transition-colors ${followerTrendPickerYear >= currentYear ? 'opacity-30 cursor-not-allowed' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}><ChevronRight size={16} /></button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {monthShort.map((m, i) => {
+                          const isFuture = followerTrendPickerYear > currentYear || (followerTrendPickerYear === currentYear && i > currentMonth);
+                          const isSelected = followerTrendDate.year === followerTrendPickerYear && followerTrendDate.month === i;
+                          return (
+                            <button
+                              key={m}
+                              onClick={() => { setFollowerTrendDate({ month: i, year: followerTrendPickerYear }); setShowFollowerTrendDropdown(false); }}
+                              disabled={isFuture}
+                              className={`py-1.5 text-xs rounded-md text-center transition-colors 
+                                ${isFuture ? 'opacity-30 cursor-not-allowed text-neutral-500 bg-transparent' : 
+                                  isSelected ? 'bg-primary-600 text-white font-medium' : 
+                                  'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                                }
+                              `}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {dynamicFollowerTrendData.length === 0 ? (
+                <div className="h-64 flex items-center justify-center text-sm text-neutral-500">No data available for the selected period</div>
+              ) : (
+                <>
+                <p className="text-xs text-neutral-500 mb-2 italic">Unfollow tracking unavailable. Growth rate calculated from daily total change.</p>
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={dynamicFollowerTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
+                      <XAxis dataKey="date" interval={0} tick={{ fontSize: 10, fill: '#737373' }} axisLine={false} tickLine={false} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#737373' }} tickFormatter={(val) => `${val}%`} />
+                      
+                      <ReferenceLine y={0} stroke="#ef4444" strokeWidth={1} strokeDasharray="3 3" />
+                      
+                      <RechartsTooltip 
+                        cursor={{ fill: '#f5f5f5', opacity: 0.1 }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-3 shadow-lg rounded-lg text-sm z-50">
+                                <p className="font-semibold text-neutral-900 dark:text-white mb-2">Day {data.date}</p>
+                                <p className="text-neutral-600 dark:text-neutral-400">Growth Rate: <span className={`font-medium ${data.growth < 0 ? 'text-red-500' : 'text-emerald-500'}`}>{data.growth > 0 ? '+' : ''}{data.growth}%</span></p>
+                                <p className="text-neutral-600 dark:text-neutral-400">Today's Total: <span className="font-medium text-neutral-900 dark:text-white">{data.todayTotal.toLocaleString()}</span></p>
+                                <p className="text-neutral-600 dark:text-neutral-400">Yesterday's Total: <span className="font-medium text-neutral-900 dark:text-white">{data.startFollowers.toLocaleString()}</span></p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+
+                      <Line 
+                        type="monotone" 
+                        dataKey="growth" 
+                        stroke="#0ea5e9" 
+                        strokeWidth={2} 
+                        dot={(props: any) => {
+                          const { cx, cy, payload } = props;
+                          return (
+                            <circle 
+                              key={`dot-${payload.date}`}
+                              cx={cx} 
+                              cy={cy} 
+                              r={3} 
+                              fill={payload.growth < 0 ? '#ef4444' : '#10b981'} 
+                              stroke="none" 
+                            />
+                          );
+                        }}
+                        activeDot={(props: any) => {
+                          const { cx, cy, payload } = props;
+                          return (
+                            <circle 
+                              key={`activeDot-${payload.date}`}
+                              cx={cx} 
+                              cy={cy} 
+                              r={5} 
+                              fill={payload.growth < 0 ? '#ef4444' : '#10b981'} 
+                              stroke="#fff"
+                              strokeWidth={2}
+                            />
+                          );
+                        }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                </>
+              )}
+            </div>
+          </Card>
+        </div>
       </section>
 
 

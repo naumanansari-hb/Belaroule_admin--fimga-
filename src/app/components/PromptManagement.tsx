@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   FileText,
   RefreshCw,
@@ -22,6 +22,8 @@ interface Prompt {
   lastUpdatedBy: string;
   lastUpdatedOn: string;
   status: 'active' | 'inactive';
+  modelUsed: string;
+  provider: string;
 }
 
 // Mock Prompts
@@ -34,9 +36,11 @@ const mockPrompts: Prompt[] = [
     moduleContext: 'OOTD',
     variablesCount: 5,
     currentVersion: 'v5',
-    lastUpdatedBy: 'Admin User',
+    lastUpdatedBy: 'John Doe',
     lastUpdatedOn: '2024-01-15 14:30',
     status: 'active',
+    modelUsed: 'gpt-4o',
+    provider: 'OpenAI',
   },
   {
     id: 'P002',
@@ -46,9 +50,11 @@ const mockPrompts: Prompt[] = [
     moduleContext: 'Wardrobe AI',
     variablesCount: 3,
     currentVersion: 'v3',
-    lastUpdatedBy: 'Admin User',
+    lastUpdatedBy: 'Jane Smith',
     lastUpdatedOn: '2024-01-14 11:20',
     status: 'active',
+    modelUsed: 'claude-3',
+    provider: 'Anthropic',
   },
   {
     id: 'P003',
@@ -58,9 +64,11 @@ const mockPrompts: Prompt[] = [
     moduleContext: 'Mood Analysis',
     variablesCount: 4,
     currentVersion: 'v2',
-    lastUpdatedBy: 'Super Admin',
+    lastUpdatedBy: 'Alice Johnson',
     lastUpdatedOn: '2024-01-13 09:15',
     status: 'active',
+    modelUsed: 'gemini-1.5',
+    provider: 'Gemini',
   },
   {
     id: 'P004',
@@ -70,9 +78,11 @@ const mockPrompts: Prompt[] = [
     moduleContext: 'Style AI',
     variablesCount: 6,
     currentVersion: 'v4',
-    lastUpdatedBy: 'Admin User',
+    lastUpdatedBy: 'Bob Smith',
     lastUpdatedOn: '2024-01-12 16:45',
     status: 'inactive',
+    modelUsed: 'gpt-3.5',
+    provider: 'OpenAI',
   },
 ];
 
@@ -263,10 +273,10 @@ export default function PromptManagement() {
       <div className="max-w-[100%] mx-auto">
         {/* PAGE HEADER */}
         <PageHeader
-          title="Prompts & API Setting"
+          title="Prompt Configurations"
           breadcrumbs={[
             { label: 'Prompt Management', href: '#' },
-            { label: 'Prompts & API Setting', current: true },
+            { label: 'Prompt Configurations', current: true },
           ]}
         >
           <div className="relative">
@@ -417,6 +427,8 @@ export default function PromptManagement() {
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Prompt Key</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Prompt Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Model Used</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Provider</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Module / Context</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Variables</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Version</th>
@@ -440,6 +452,16 @@ export default function PromptManagement() {
                     <td className="px-4 py-3">
                       <span className="text-sm text-neutral-900 dark:text-white font-medium">
                         {prompt.promptName}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                        {prompt.modelUsed}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                        {prompt.provider}
                       </span>
                     </td>
                     <td className="px-4 py-3">
