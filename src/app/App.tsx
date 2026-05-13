@@ -257,7 +257,7 @@ function AppContent() {
         ) : currentPage === "prompt-api-settings" ? (
           <PromptManagement />
         ) : currentPage === "ai-api-configuration" ? (
-          <APIConfigurationManagement />
+          <APIConfigurationManagement onNavigate={handleNavigate} />
         ) : currentPage === "app-configuration" ? (
           <AppConfiguration />
         ) : currentPage === "task-configurations" ? (

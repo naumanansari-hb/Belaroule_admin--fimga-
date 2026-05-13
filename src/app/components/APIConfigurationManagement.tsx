@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Settings,
   RefreshCw,
@@ -16,11 +16,7 @@ import APIConfigurationDetail from './APIConfigurationDetail';
 interface APIConfiguration {
   id: string;
   providerName: string;
-  modelName: string;
-  providerType: 'OpenAI' | 'Google' | 'Anthropic' | 'Custom';
   apiBaseUrl: string;
-  isDefaultModel: boolean;
-  status: 'active' | 'inactive';
   lastUpdatedBy: string;
   lastUpdatedOn: string;
 }
@@ -30,50 +26,24 @@ const mockAPIConfigurations: APIConfiguration[] = [
   {
     id: 'API001',
     providerName: 'OpenAI',
-    modelName: 'GPT-4',
-    providerType: 'OpenAI',
     apiBaseUrl: 'https://api.openai.com/v1/***',
-    isDefaultModel: true,
-    status: 'active',
     lastUpdatedBy: 'Super Admin',
     lastUpdatedOn: '2024-01-15 14:30',
   },
   {
     id: 'API002',
-    providerName: 'OpenAI',
-    modelName: 'GPT-3.5-Turbo',
-    providerType: 'OpenAI',
-    apiBaseUrl: 'https://api.openai.com/v1/***',
-    isDefaultModel: false,
-    status: 'active',
-    lastUpdatedBy: 'Super Admin',
-    lastUpdatedOn: '2024-01-14 11:20',
-  },
-  {
-    id: 'API003',
-    providerName: 'Anthropic',
-    modelName: 'Claude-3',
-    providerType: 'Anthropic',
-    apiBaseUrl: 'https://api.anthropic.com/v1/***',
-    isDefaultModel: true,
-    status: 'active',
-    lastUpdatedBy: 'Admin User',
-    lastUpdatedOn: '2024-01-13 09:15',
-  },
-  {
-    id: 'API004',
-    providerName: 'Google',
-    modelName: 'Gemini Pro',
-    providerType: 'Google',
+    providerName: 'Gemini',
     apiBaseUrl: 'https://generativelanguage.***',
-    isDefaultModel: true,
-    status: 'inactive',
-    lastUpdatedBy: 'Super Admin',
+    lastUpdatedBy: 'Admin User',
     lastUpdatedOn: '2024-01-12 16:45',
   },
 ];
 
-export default function APIConfigurationManagement() {
+interface APIConfigurationManagementProps {
+  onNavigate?: (pageId: string) => void;
+}
+
+export default function APIConfigurationManagement({ onNavigate }: APIConfigurationManagementProps) {
   const [configurations, setConfigurations] = useState<APIConfiguration[]>(mockAPIConfigurations);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
@@ -86,19 +56,13 @@ export default function APIConfigurationManagement() {
   
   // Filter states (temporary - before Apply)
   const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedDefaultModel, setSelectedDefaultModel] = useState<string>('all');
 
   // Applied filters (only update on Apply button)
   const [appliedProvider, setAppliedProvider] = useState<string>('all');
-  const [appliedStatus, setAppliedStatus] = useState<string>('all');
-  const [appliedDefaultModel, setAppliedDefaultModel] = useState<string>('all');
 
   // Filter options
   const filterOptions = {
-    'Provider Type': ['OpenAI', 'Google', 'Anthropic', 'Custom'],
-    'Status': ['Active', 'Inactive'],
-    'Default Model': ['Yes', 'No'],
+    'Provider Name': ['OpenAI', 'Gemini'],
   };
 
   // Get unique providers
@@ -111,7 +75,7 @@ export default function APIConfigurationManagement() {
     // Apply search
     if (searchQuery) {
       filtered = filtered.filter((config) => {
-        const searchFields = [config.providerName, config.modelName];
+        const searchFields = [config.providerName];
         return searchFields.some(field => 
           field.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -123,39 +87,13 @@ export default function APIConfigurationManagement() {
       filtered = filtered.filter(c => c.providerName === appliedProvider);
     }
 
-    if (appliedStatus !== 'all') {
-      filtered = filtered.filter(c => c.status === appliedStatus);
-    }
-
-    if (appliedDefaultModel !== 'all') {
-      const isDefault = appliedDefaultModel === 'yes';
-      filtered = filtered.filter(c => c.isDefaultModel === isDefault);
-    }
-
     // Apply advanced filters
     const matchesFilters = (config: APIConfiguration) => {
       return filters.every(filter => {
         if (filter.values.length === 0) return true;
         
-        if (filter.field === 'Provider Type') {
-          return filter.values.includes(config.providerType);
-        }
-        
-        if (filter.field === 'Status') {
-          return filter.values.some(v => {
-            const statusMap: Record<string, string> = {
-              'Active': 'active',
-              'Inactive': 'inactive'
-            };
-            return statusMap[v] === config.status;
-          });
-        }
-
-        if (filter.field === 'Default Model') {
-          return filter.values.some(v => {
-            const isDefault = v === 'Yes';
-            return config.isDefaultModel === isDefault;
-          });
+        if (filter.field === 'Provider Name') {
+          return filter.values.includes(config.providerName);
         }
         
         return true;
@@ -172,7 +110,7 @@ export default function APIConfigurationManagement() {
     });
 
     return filtered;
-  }, [configurations, searchQuery, appliedProvider, appliedStatus, appliedDefaultModel, filters]);
+  }, [configurations, searchQuery, appliedProvider, filters]);
 
   // Pagination
   const paginatedData = useMemo(() => {
@@ -184,14 +122,10 @@ export default function APIConfigurationManagement() {
 
   // Get summary widgets
   const getSummaryWidgets = () => {
-    const activeCount = configurations.filter(c => c.status === 'active').length;
-    const defaultCount = configurations.filter(c => c.isDefaultModel).length;
     const totalProviders = new Set(configurations.map(c => c.providerName)).size;
     
     return [
       { label: 'Total Configurations', value: configurations.length.toString(), icon: Settings },
-      { label: 'Active Configs', value: activeCount.toString(), icon: Settings },
-      { label: 'Default Models', value: defaultCount.toString(), icon: Settings },
       { label: 'Providers', value: totalProviders.toString(), icon: Settings },
     ];
   };
@@ -229,8 +163,6 @@ export default function APIConfigurationManagement() {
   // Clear all filters
   const clearAllFilters = () => {
     setSelectedProvider('all');
-    setSelectedStatus('all');
-    setSelectedDefaultModel('all');
     setFilters([]);
     toast.success('Filters cleared');
   };
@@ -238,8 +170,6 @@ export default function APIConfigurationManagement() {
   // Apply filters
   const applyFilters = () => {
     setAppliedProvider(selectedProvider);
-    setAppliedStatus(selectedStatus);
-    setAppliedDefaultModel(selectedDefaultModel);
     toast.success('Filters applied');
   };
 
@@ -254,6 +184,7 @@ export default function APIConfigurationManagement() {
           setIsCreatingNew(false);
         }}
         onSave={handleSave}
+        onNavigate={onNavigate}
       />
     );
   }
@@ -275,7 +206,7 @@ export default function APIConfigurationManagement() {
               onChange={setSearchQuery}
               onAdvancedSearch={() => setShowAdvancedSearch(true)}
               activeFilterCount={filters.filter(f => f.values.length > 0).length}
-              placeholder="Search by Provider or Model..."
+              placeholder="Search by Provider..."
             />
 
             <AdvancedSearchPanel
@@ -342,34 +273,6 @@ export default function APIConfigurationManagement() {
                     ))}
                   </FormSelect>
                 </div>
-
-                {/* Status Filter */}
-                <div>
-                  <FormLabel htmlFor="status">Status</FormLabel>
-                  <FormSelect
-                    id="status"
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </FormSelect>
-                </div>
-
-                {/* Default Model Filter */}
-                <div>
-                  <FormLabel htmlFor="defaultModel">Default Model</FormLabel>
-                  <FormSelect
-                    id="defaultModel"
-                    value={selectedDefaultModel}
-                    onChange={(e) => setSelectedDefaultModel(e.target.value)}
-                  >
-                    <option value="all">All</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </FormSelect>
-                </div>
               </div>
 
               <div className="flex items-center justify-end mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
@@ -408,11 +311,7 @@ export default function APIConfigurationManagement() {
               <thead className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">API Provider Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Model Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Provider Type</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">API Base URL</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Default Model</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Last Updated By</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Last Updated On</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Action</th>
@@ -435,36 +334,8 @@ export default function APIConfigurationManagement() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
-                        {config.modelName}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                        {config.providerType}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
                       <span className="text-sm text-neutral-600 dark:text-neutral-400 font-mono">
                         {config.apiBaseUrl}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        config.isDefaultModel
-                          ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
-                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                      }`}>
-                        {config.isDefaultModel ? 'Yes' : 'No'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        config.status === 'active'
-                          ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300'
-                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                      }`}>
-                        {config.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -513,12 +384,12 @@ export default function APIConfigurationManagement() {
           <div className="text-center py-12">
             <Settings className="w-12 h-12 text-neutral-400 dark:text-neutral-600 mx-auto mb-3" />
             <h3 className="text-sm font-medium text-neutral-900 dark:text-white mb-1">
-              {searchQuery || filters.length > 0 || selectedProvider !== 'all' || selectedStatus !== 'all'
+              {searchQuery || filters.length > 0 || selectedProvider !== 'all'
                 ? 'No configurations match the selected criteria'
                 : 'No LLM configurations available'}
             </h3>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              {searchQuery || filters.length > 0 || selectedProvider !== 'all' || selectedStatus !== 'all'
+              {searchQuery || filters.length > 0 || selectedProvider !== 'all'
                 ? 'Try adjusting your search or filters'
                 : 'Add a new configuration to get started'}
             </p>

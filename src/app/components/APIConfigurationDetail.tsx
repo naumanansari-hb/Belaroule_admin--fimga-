@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { ArrowLeft, Settings, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { PrimaryButton, SecondaryButton } from './hb/listing';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, Settings, AlertCircle, Eye, EyeOff, Edit2 } from 'lucide-react';
+import { PrimaryButton, SecondaryButton, Pagination } from './hb/listing';
 import {
   FormModal,
   FormSection,
@@ -8,7 +8,6 @@ import {
   FormLabel,
   FormInput,
   FormFooter,
-  FormSelect,
 } from './hb/common/Form';
 import { toast } from 'sonner';
 
@@ -16,34 +15,43 @@ interface APIConfigurationDetailProps {
   configuration: {
     id: string;
     providerName: string;
-    modelName: string;
-    providerType: 'OpenAI' | 'Google' | 'Anthropic' | 'Custom';
     apiBaseUrl: string;
-    isDefaultModel: boolean;
-    status: 'active' | 'inactive';
     lastUpdatedBy: string;
     lastUpdatedOn: string;
   } | null;
   isCreating: boolean;
   onBack: () => void;
   onSave: (config: any) => void;
+  onNavigate?: (pageId: string) => void;
 }
 
-export default function APIConfigurationDetail({ configuration, isCreating, onBack, onSave }: APIConfigurationDetailProps) {
+// Mock Change Log Data
+const mockChangeLogs = Array.from({ length: 15 }, (_, i) => ({
+  id: `log-${i + 1}`,
+  action: i % 2 === 0 ? 'Key Changed' : 'Base URL updated',
+  adminUser: 'Nauman Ansari',
+  timestamp: `2024-01-15 14:${30 - i}:25`,
+}));
+
+export default function APIConfigurationDetail({ configuration, isCreating, onBack, onSave, onNavigate }: APIConfigurationDetailProps) {
   const [formData, setFormData] = useState({
     providerName: configuration?.providerName || '',
-    providerType: configuration?.providerType || 'OpenAI' as 'OpenAI' | 'Google' | 'Anthropic' | 'Custom',
     apiBaseUrl: configuration?.apiBaseUrl || '',
-    modelName: configuration?.modelName || '',
-    modelVersion: '',
-    isDefaultModel: configuration?.isDefaultModel || false,
     apiKey: '',
-    keyLabel: '',
-    status: configuration?.status || 'active' as 'active' | 'inactive',
   });
   const [showApiKey, setShowApiKey] = useState(false);
+  const [isApiKeyEditable, setIsApiKeyEditable] = useState(isCreating);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Change Log Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+  const paginatedLogs = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return mockChangeLogs.slice(startIndex, startIndex + pageSize);
+  }, [currentPage]);
+  const totalPages = Math.ceil(mockChangeLogs.length / pageSize);
 
   // Validate form
   const validateForm = () => {
@@ -57,10 +65,6 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
       newErrors.apiBaseUrl = 'API Base URL is required';
     } else if (!/^https?:\/\/.+/.test(formData.apiBaseUrl)) {
       newErrors.apiBaseUrl = 'Invalid URL format';
-    }
-
-    if (!formData.modelName.trim()) {
-      newErrors.modelName = 'Model name is required';
     }
 
     if (isCreating && !formData.apiKey.trim()) {
@@ -131,38 +135,17 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
           <div className="p-6">
             <FormSection>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* LLM Provider Name */}
+                {/* API Provider Name */}
                 <FormField>
-                  <FormLabel htmlFor="providerName" required>LLM Provider Name</FormLabel>
+                  <FormLabel htmlFor="providerName">API Provider</FormLabel>
                   <FormInput
                     id="providerName"
                     type="text"
                     value={formData.providerName}
-                    onChange={(e) => {
-                      setFormData({ ...formData, providerName: e.target.value });
-                      setErrors({ ...errors, providerName: '' });
-                    }}
-                    placeholder="e.g., OpenAI"
-                    className={errors.providerName ? 'border-error-500' : ''}
+                    readOnly
+                    disabled
+                    className="bg-neutral-100 dark:bg-neutral-800 text-neutral-500"
                   />
-                  {errors.providerName && (
-                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.providerName}</p>
-                  )}
-                </FormField>
-
-                {/* Provider Type */}
-                <FormField>
-                  <FormLabel htmlFor="providerType" required>Provider Type</FormLabel>
-                  <FormSelect
-                    id="providerType"
-                    value={formData.providerType}
-                    onChange={(e) => setFormData({ ...formData, providerType: e.target.value as any })}
-                  >
-                    <option value="OpenAI">OpenAI</option>
-                    <option value="Google">Google</option>
-                    <option value="Anthropic">Anthropic</option>
-                    <option value="Custom">Custom</option>
-                  </FormSelect>
                 </FormField>
 
                 {/* API Base URL */}
@@ -188,70 +171,6 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
           </div>
         </div>
 
-        {/* Model Configuration Section */}
-        <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
-          <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
-              Model Configuration
-            </h2>
-          </div>
-          <div className="p-6">
-            <FormSection>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Model Name */}
-                <FormField>
-                  <FormLabel htmlFor="modelName" required>Model Name</FormLabel>
-                  <FormInput
-                    id="modelName"
-                    type="text"
-                    value={formData.modelName}
-                    onChange={(e) => {
-                      setFormData({ ...formData, modelName: e.target.value });
-                      setErrors({ ...errors, modelName: '' });
-                    }}
-                    placeholder="e.g., GPT-4"
-                    className={errors.modelName ? 'border-error-500' : ''}
-                  />
-                  {errors.modelName && (
-                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.modelName}</p>
-                  )}
-                </FormField>
-
-                {/* Model Version */}
-                <FormField>
-                  <FormLabel htmlFor="modelVersion">Model Version (Optional)</FormLabel>
-                  <FormInput
-                    id="modelVersion"
-                    type="text"
-                    value={formData.modelVersion}
-                    onChange={(e) => setFormData({ ...formData, modelVersion: e.target.value })}
-                    placeholder="e.g., 1.0.0"
-                  />
-                </FormField>
-
-                {/* Default Model Toggle */}
-                <FormField className="md:col-span-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isDefaultModel"
-                      checked={formData.isDefaultModel}
-                      onChange={(e) => setFormData({ ...formData, isDefaultModel: e.target.checked })}
-                      className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 text-primary-600 focus:ring-primary-500"
-                    />
-                    <FormLabel htmlFor="isDefaultModel" className="mb-0">
-                      Set as Default Model for this provider
-                    </FormLabel>
-                  </div>
-                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    Only one default model per provider allowed
-                  </p>
-                </FormField>
-              </div>
-            </FormSection>
-          </div>
-        </div>
-
         {/* Authentication & Security Section */}
         <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
           <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
@@ -261,31 +180,39 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
           </div>
           <div className="p-6">
             <FormSection>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {/* API Key */}
-                <FormField className="md:col-span-2">
+                <FormField>
                   <FormLabel htmlFor="apiKey" required={isCreating}>
-                    API Key {!isCreating && '(Leave blank to keep existing)'}
+                    API Key
                   </FormLabel>
-                  <div className="relative">
-                    <input
-                      id="apiKey"
-                      type={showApiKey ? 'text' : 'password'}
-                      value={formData.apiKey}
-                      onChange={(e) => {
-                        setFormData({ ...formData, apiKey: e.target.value });
-                        setErrors({ ...errors, apiKey: '' });
-                      }}
-                      placeholder={isCreating ? 'Enter API Key' : '••••••••••••••••'}
-                      className={`w-full px-3 py-2 pr-10 border ${errors.apiKey ? 'border-error-500' : 'border-neutral-300 dark:border-neutral-700'} rounded-lg bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                    >
-                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        id="apiKey"
+                        type={showApiKey ? 'text' : 'password'}
+                        value={formData.apiKey}
+                        disabled={!isApiKeyEditable}
+                        onChange={(e) => {
+                          setFormData({ ...formData, apiKey: e.target.value });
+                          setErrors({ ...errors, apiKey: '' });
+                        }}
+                        placeholder={isCreating ? 'Enter API Key' : '••••••••••••••••'}
+                        className={`w-full px-3 py-2 pr-10 border ${errors.apiKey ? 'border-error-500' : 'border-neutral-300 dark:border-neutral-700'} rounded-lg bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-100 disabled:dark:bg-neutral-900 disabled:text-neutral-500`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                      >
+                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {!isApiKeyEditable && (
+                      <SecondaryButton onClick={() => setIsApiKeyEditable(true)} className="gap-2">
+                        <Edit2 className="w-4 h-4" /> Edit
+                      </SecondaryButton>
+                    )}
                   </div>
                   {errors.apiKey && (
                     <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.apiKey}</p>
@@ -294,51 +221,63 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
                     API key will be encrypted and never displayed in full again
                   </p>
                 </FormField>
-
-                {/* Key Label */}
-                <FormField>
-                  <FormLabel htmlFor="keyLabel">Key Label (Optional)</FormLabel>
-                  <FormInput
-                    id="keyLabel"
-                    type="text"
-                    value={formData.keyLabel}
-                    onChange={(e) => setFormData({ ...formData, keyLabel: e.target.value })}
-                    placeholder="e.g., Production Key"
-                  />
-                </FormField>
               </div>
             </FormSection>
           </div>
         </div>
-
-        {/* Status Section */}
-        <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
-          <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
-              Status
-            </h2>
+        {/* Change Log Section */}
+        {!isCreating && (
+          <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
+            <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+              <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
+                Change Log
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Action</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Admin User</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Time Stamp</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                  {paginatedLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
+                      <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">{log.action}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (onNavigate) {
+                              onNavigate('sub-admins');
+                            }
+                          }}
+                          className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:underline"
+                        >
+                          {log.adminUser}
+                        </a>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">{log.timestamp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {mockChangeLogs.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={mockChangeLogs.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={() => {}}
+              />
+            )}
           </div>
-          <div className="p-6">
-            <FormSection>
-              <FormField>
-                <FormLabel htmlFor="status" required>Status</FormLabel>
-                <FormSelect
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </FormSelect>
-                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  {formData.status === 'active' 
-                    ? 'This configuration can be used at runtime' 
-                    : 'This configuration is disabled'}
-                </p>
-              </FormField>
-            </FormSection>
-          </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
@@ -371,11 +310,6 @@ export default function APIConfigurationDetail({ configuration, isCreating, onBa
                     ? 'This will add a new LLM provider configuration to the system.' 
                     : 'This will update the LLM provider configuration. Changes will be applied immediately.'}
                 </p>
-                {formData.isDefaultModel && (
-                  <p className="text-xs text-warning-700 dark:text-warning-300 mt-2">
-                    Note: Setting this as default will unset any previous default model for this provider.
-                  </p>
-                )}
               </div>
             </div>
           </FormSection>
