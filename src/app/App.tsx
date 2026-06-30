@@ -37,6 +37,7 @@ import AppConfiguration from "./components/AppConfiguration";
 import TaskConfigurationManagement from "./components/TaskConfigurationManagement";
 import StaticPagesManagement from "./components/StaticPagesManagement";
 import FAQsManagement from "./components/FAQsManagement";
+import ThingsToKnowManagement from "./components/ThingsToKnowManagement";
 import RevenueReport from "./components/RevenueReport";
 import OOTDReport from "./components/OOTDReport";
 import RewardPointsReport from "./components/RewardPointsReport";
@@ -260,12 +261,16 @@ function AppContent() {
           <APIConfigurationManagement onNavigate={handleNavigate} />
         ) : currentPage === "app-configuration" ? (
           <AppConfiguration />
-        ) : currentPage === "task-configurations" ? (
-          <TaskConfigurationManagement />
+        ) : currentPage === "bca-task-configuration" ? (
+          <TaskConfigurationManagement configType="BCA" />
+        ) : currentPage === "bcc-task-configuration" ? (
+          <TaskConfigurationManagement configType="BCC" />
         ) : currentPage === "static-pages" ? (
           <StaticPagesManagement />
         ) : currentPage === "faqs" ? (
           <FAQsManagement />
+        ) : currentPage === "things-to-know" ? (
+          <ThingsToKnowManagement />
         ) : currentPage === "revenue-report" ? (
           <RevenueReport />
         ) : currentPage === "ootd-report" ? (

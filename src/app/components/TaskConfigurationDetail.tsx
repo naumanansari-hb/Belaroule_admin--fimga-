@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Award, AlertCircle, Info } from 'lucide-react';
 import { PrimaryButton, SecondaryButton } from './hb/listing';
 import {
@@ -30,11 +30,12 @@ interface TaskConfigurationDetailProps {
   };
   onBack: () => void;
   onUpdate: (task: any) => void;
+  configType?: 'BCA' | 'BCC';
 }
 
-export default function TaskConfigurationDetail({ task, onBack, onUpdate }: TaskConfigurationDetailProps) {
+export default function TaskConfigurationDetail({ task, onBack, onUpdate, configType = 'BCA' }: TaskConfigurationDetailProps) {
   const [formData, setFormData] = useState({
-    rewardPoints: task.rewardPoints.toString(),
+    rewardPoints: Math.abs(task.rewardPoints).toString(),
     frequencyType: task.frequencyType,
     maxCount: task.maxCount !== null ? task.maxCount.toString() : '',
     status: task.status,
@@ -47,7 +48,7 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
     const newErrors: Record<string, string> = {};
 
     if (!formData.rewardPoints.trim()) {
-      newErrors.rewardPoints = 'Reward points is required';
+      newErrors.rewardPoints = configType === 'BCA' ? 'Reward points is required' : 'BCC Coins is required';
     } else if (isNaN(parseInt(formData.rewardPoints))) {
       newErrors.rewardPoints = 'Must be a valid number';
     }
@@ -71,9 +72,12 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
 
   // Handle confirm save
   const handleConfirmSave = () => {
+    const pointsValue = parseInt(formData.rewardPoints);
+    const resolvedPoints = task.taskType === 'Spend' ? -Math.abs(pointsValue) : Math.abs(pointsValue);
+
     const updatedTask = {
       ...task,
-      rewardPoints: parseInt(formData.rewardPoints),
+      rewardPoints: resolvedPoints,
       frequencyType: formData.frequencyType,
       maxCount: formData.maxCount ? parseInt(formData.maxCount) : null,
       status: formData.status,
@@ -95,7 +99,7 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
             className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Task Configurations
+            Back to {configType} Task Configuration
           </button>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900 flex items-center justify-center flex-shrink-0">
@@ -106,7 +110,7 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
                 {task.taskName}
               </h1>
               <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                Configure reward points, frequency, and status for this task.
+                Configure {configType === 'BCA' ? 'reward points' : 'BCC Coins'}, frequency, and status for this task.
               </p>
             </div>
           </div>
@@ -209,7 +213,7 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
         <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden mb-6">
           <div className="bg-neutral-50 dark:bg-neutral-900 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
             <h2 className="text-sm font-medium text-neutral-900 dark:text-white">
-              Reward Configuration (Editable)
+              {configType === 'BCA' ? 'Reward Configuration (Editable)' : 'BCC Coins Configuration (Editable)'}
             </h2>
           </div>
           <div className="p-6">
@@ -217,7 +221,7 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Reward Points */}
                 <FormField>
-                  <FormLabel htmlFor="rewardPoints" required>Reward Points</FormLabel>
+                  <FormLabel htmlFor="rewardPoints" required>{configType === 'BCA' ? 'Reward Points' : 'BCC Coins'}</FormLabel>
                   <FormInput
                     id="rewardPoints"
                     type="number"
@@ -226,25 +230,26 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
                       setFormData({ ...formData, rewardPoints: e.target.value });
                       setErrors({ ...errors, rewardPoints: '' });
                     }}
-                    placeholder="Enter reward points"
+                    placeholder={configType === 'BCA' ? 'Enter reward points' : 'Enter BCC coins'}
                     className={errors.rewardPoints ? 'border-error-500' : ''}
                   />
                   {errors.rewardPoints && (
                     <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.rewardPoints}</p>
                   )}
                   <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    Use negative values for Spend tasks (e.g., -50)
+                    Enter the value as a positive number (e.g., {configType === 'BCA' ? '50' : '10'})
                   </p>
                 </FormField>
 
                 {/* Frequency Type */}
                 <FormField>
-                  <FormLabel htmlFor="frequencyType" required>Frequency Type</FormLabel>
+                  <FormLabel htmlFor="frequencyType">Frequency Type</FormLabel>
                   <FormSelect
                     id="frequencyType"
                     value={formData.frequencyType}
                     onChange={(e) => setFormData({ ...formData, frequencyType: e.target.value as any })}
-                    disabled={task.isSystemCalculated}
+                    disabled
+                    className="bg-neutral-50 dark:bg-neutral-900 cursor-not-allowed"
                   >
                     <option value="Once">Once</option>
                     <option value="Daily">Daily</option>
@@ -253,13 +258,8 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
                     <option value="Lifetime">Lifetime</option>
                     <option value="Per Use">Per Use</option>
                   </FormSelect>
-                  {task.isSystemCalculated && (
-                    <p className="mt-1 text-xs text-warning-600 dark:text-warning-400">
-                      Fixed by system logic
-                    </p>
-                  )}
                 </FormField>
-
+ 
                 {/* Max Count */}
                 <FormField>
                   <FormLabel htmlFor="maxCount">Max Count (Optional)</FormLabel>
@@ -271,32 +271,30 @@ export default function TaskConfigurationDetail({ task, onBack, onUpdate }: Task
                       setFormData({ ...formData, maxCount: e.target.value });
                       setErrors({ ...errors, maxCount: '' });
                     }}
+                    disabled
                     placeholder="Leave empty for unlimited"
-                    className={errors.maxCount ? 'border-error-500' : ''}
+                    className="bg-neutral-50 dark:bg-neutral-900 cursor-not-allowed"
                   />
-                  {errors.maxCount && (
-                    <p className="mt-1 text-xs text-error-600 dark:text-error-400">{errors.maxCount}</p>
-                  )}
                   <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
                     Maximum number of times this task can be completed
                   </p>
                 </FormField>
-
+ 
                 {/* Status */}
                 <FormField>
-                  <FormLabel htmlFor="status" required>Status</FormLabel>
+                  <FormLabel htmlFor="status">Status</FormLabel>
                   <FormSelect
                     id="status"
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as 'enabled' | 'disabled' })}
+                    disabled
+                    className="bg-neutral-50 dark:bg-neutral-900 cursor-not-allowed"
                   >
                     <option value="enabled">Enabled</option>
                     <option value="disabled">Disabled</option>
                   </FormSelect>
                   <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    {formData.status === 'enabled' 
-                      ? 'Task will grant/consume points when triggered' 
-                      : 'Task is disabled and will not affect points'}
+                    Task status is system-configured
                   </p>
                 </FormField>
               </div>

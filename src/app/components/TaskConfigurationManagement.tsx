@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Award,
   RefreshCw,
@@ -28,15 +28,15 @@ interface TaskConfiguration {
   isSystemCalculated?: boolean;
 }
 
-// Mock Task Configurations
-const mockTaskConfigurations: TaskConfiguration[] = [
+// Mock BCA Task Configurations
+const mockBCATaskConfigurations: TaskConfiguration[] = [
   {
     id: 'TASK001',
     taskName: 'User Registration',
     taskCategory: 'Onboarding & Profile',
     taskType: 'Earn',
     triggerCondition: 'User completes registration',
-    rewardPoints: 50,
+    rewardPoints: 20,
     frequencyType: 'Once',
     maxCount: 1,
     status: 'enabled',
@@ -46,101 +46,421 @@ const mockTaskConfigurations: TaskConfiguration[] = [
   },
   {
     id: 'TASK002',
-    taskName: 'Onboarding Completed',
+    taskName: 'Full Name Added',
     taskCategory: 'Onboarding & Profile',
     taskType: 'Earn',
-    triggerCondition: 'Auto-calculated when all onboarding tasks completed',
-    rewardPoints: 200,
+    triggerCondition: 'User adds their full name to profile',
+    rewardPoints: 5,
     frequencyType: 'Once',
     maxCount: 1,
     status: 'enabled',
-    lastModifiedBy: 'System',
-    lastModifiedDate: '2024-01-15 10:00',
-    taskDescription: 'Auto-calculated reward for completing all onboarding steps',
-    isSystemCalculated: true,
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding full name',
   },
   {
     id: 'TASK003',
-    taskName: 'Daily Login Day 1',
+    taskName: 'Age Group Selected',
+    taskCategory: 'Onboarding & Profile',
+    taskType: 'Earn',
+    triggerCondition: 'User selects their age group',
+    rewardPoints: 5,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for selecting age group',
+  },
+  {
+    id: 'TASK004',
+    taskName: 'Body Shape Added',
+    taskCategory: 'Onboarding & Profile',
+    taskType: 'Earn',
+    triggerCondition: 'User adds body shape details',
+    rewardPoints: 10,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding body shape',
+  },
+  {
+    id: 'TASK005',
+    taskName: 'Color Preference Added',
+    taskCategory: 'Onboarding & Profile',
+    taskType: 'Earn',
+    triggerCondition: 'User selects color preferences',
+    rewardPoints: 10,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding color preference',
+  },
+  {
+    id: 'TASK006',
+    taskName: 'Valid User Image Uploaded',
+    taskCategory: 'Onboarding & Profile',
+    taskType: 'Earn',
+    triggerCondition: 'User uploads a valid profile picture',
+    rewardPoints: 15,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for uploading a valid image',
+  },
+  {
+    id: 'TASK007',
+    taskName: 'Style Preference Added',
+    taskCategory: 'Onboarding & Profile',
+    taskType: 'Earn',
+    triggerCondition: 'User selects style preferences',
+    rewardPoints: 10,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding style preference',
+  },
+  {
+    id: 'TASK008',
+    taskName: 'First Outfit Added',
+    taskCategory: 'Onboarding & Profile',
+    taskType: 'Earn',
+    triggerCondition: 'User adds their first outfit to the wardrobe',
+    rewardPoints: 20,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding their first outfit',
+  },
+  {
+    id: 'TASK009',
+    taskName: 'Daily Login — Day 1',
     taskCategory: 'Login & Streak',
     taskType: 'Earn',
     triggerCondition: 'User logs in on day 1 of streak',
-    rewardPoints: 10,
+    rewardPoints: 3,
     frequencyType: 'Daily',
     maxCount: null,
     status: 'enabled',
     lastModifiedBy: 'Super Admin',
-    lastModifiedDate: '2024-01-14 11:20',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for daily login - day 1',
   },
   {
-    id: 'TASK004',
+    id: 'TASK010',
+    taskName: 'Daily Login — Day 2',
+    taskCategory: 'Login & Streak',
+    taskType: 'Earn',
+    triggerCondition: 'User logs in on day 2 of streak',
+    rewardPoints: 3,
+    frequencyType: 'Daily',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for daily login - day 2',
+  },
+  {
+    id: 'TASK011',
+    taskName: 'Daily Login — Day 3',
+    taskCategory: 'Login & Streak',
+    taskType: 'Earn',
+    triggerCondition: 'User logs in on day 3 of streak',
+    rewardPoints: 3,
+    frequencyType: 'Daily',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for daily login - day 3',
+  },
+  {
+    id: 'TASK012',
+    taskName: 'Daily Login — Day 4',
+    taskCategory: 'Login & Streak',
+    taskType: 'Earn',
+    triggerCondition: 'User logs in on day 4 of streak',
+    rewardPoints: 3,
+    frequencyType: 'Daily',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for daily login - day 4',
+  },
+  {
+    id: 'TASK013',
+    taskName: 'Daily Login — Day 5',
+    taskCategory: 'Login & Streak',
+    taskType: 'Earn',
+    triggerCondition: 'User logs in on day 5 of streak',
+    rewardPoints: 3,
+    frequencyType: 'Daily',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for daily login - day 5',
+  },
+  {
+    id: 'TASK014',
+    taskName: 'Daily Login — Day 6',
+    taskCategory: 'Login & Streak',
+    taskType: 'Earn',
+    triggerCondition: 'User logs in on day 6 of streak',
+    rewardPoints: 3,
+    frequencyType: 'Daily',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for daily login - day 6',
+  },
+  {
+    id: 'TASK015',
     taskName: 'Weekly Streak Bonus',
     taskCategory: 'Login & Streak',
     taskType: 'Earn',
-    triggerCondition: 'User maintains 7-day login streak',
-    rewardPoints: 100,
+    triggerCondition: 'User maintains a weekly login streak',
+    rewardPoints: 15,
     frequencyType: 'Weekly',
     maxCount: null,
     status: 'enabled',
     lastModifiedBy: 'Super Admin',
-    lastModifiedDate: '2024-01-13 09:15',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for maintaining weekly streak',
   },
   {
-    id: 'TASK005',
-    taskName: 'Like Post',
-    taskCategory: 'Community Engagement',
+    id: 'TASK016',
+    taskName: 'Complete Outfit Set',
+    taskCategory: 'Wardrobe',
     taskType: 'Earn',
-    triggerCondition: 'User likes another user\'s post',
-    rewardPoints: 2,
+    triggerCondition: 'User completes an outfit set',
+    rewardPoints: 20,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for completing outfit set',
+  },
+  {
+    id: 'TASK017',
+    taskName: 'Add Brand Name',
+    taskCategory: 'Wardrobe',
+    taskType: 'Earn',
+    triggerCondition: 'User adds brand name to item',
+    rewardPoints: 5,
     frequencyType: 'Per Use',
     maxCount: 20,
     status: 'enabled',
     lastModifiedBy: 'Super Admin',
-    lastModifiedDate: '2024-01-12 16:45',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding brand name',
   },
   {
-    id: 'TASK006',
-    taskName: 'Add Wardrobe Slot',
-    taskCategory: 'Wardrobe & Outfit',
+    id: 'TASK018',
+    taskName: 'Add Purchase Price',
+    taskCategory: 'Wardrobe',
+    taskType: 'Earn',
+    triggerCondition: 'User adds purchase price to item',
+    rewardPoints: 10,
+    frequencyType: 'Per Use',
+    maxCount: 20,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for adding purchase price',
+  },
+  {
+    id: 'TASK019',
+    taskName: 'First Social Post',
+    taskCategory: 'Community Engagement',
+    taskType: 'Earn',
+    triggerCondition: 'User shares their first social post',
+    rewardPoints: 15,
+    frequencyType: 'Once',
+    maxCount: 1,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for sharing first social post',
+  },
+  {
+    id: 'TASK020',
+    taskName: 'Like Post',
+    taskCategory: 'Community Engagement',
+    taskType: 'Earn',
+    triggerCondition: 'User likes a post',
+    rewardPoints: 2,
+    frequencyType: 'Lifetime',
+    maxCount: 5,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for liking a post',
+  },
+  {
+    id: 'TASK021',
+    taskName: 'Comment Post',
+    taskCategory: 'Community Engagement',
+    taskType: 'Earn',
+    triggerCondition: 'User comments on a post',
+    rewardPoints: 3,
+    frequencyType: 'Lifetime',
+    maxCount: 10,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for commenting on a post',
+  },
+  {
+    id: 'TASK022',
+    taskName: 'Follow User',
+    taskCategory: 'Community Engagement',
+    taskType: 'Earn',
+    triggerCondition: 'User follows another user',
+    rewardPoints: 5,
+    frequencyType: 'Lifetime',
+    maxCount: 10,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Reward user for following another user',
+  },
+  {
+    id: 'TASK023',
+    taskName: 'Restore Streak',
+    taskCategory: 'Utility',
     taskType: 'Spend',
-    triggerCondition: 'User purchases additional wardrobe slot',
+    triggerCondition: 'Per use',
+    rewardPoints: -20,
+    frequencyType: 'Per Use',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Deduct points for restoring a login streak',
+  },
+  {
+    id: 'TASK024',
+    taskName: 'Detailed Analytics',
+    taskCategory: 'Utility',
+    taskType: 'Spend',
+    triggerCondition: 'Advanced wardrobe insights',
+    rewardPoints: -130,
+    frequencyType: 'Per Use',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Deduct points for unlocking advanced wardrobe insights',
+  },
+  {
+    id: 'TASK025',
+    taskName: 'Outfit History Unlock',
+    taskCategory: 'Utility',
+    taskType: 'Spend',
+    triggerCondition: 'Beyond 3 months free',
     rewardPoints: -50,
     frequencyType: 'Per Use',
     maxCount: null,
     status: 'enabled',
     lastModifiedBy: 'Super Admin',
-    lastModifiedDate: '2024-01-11 13:25',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Deduct points for unlocking outfit history beyond 3 months',
   },
   {
-    id: 'TASK007',
-    taskName: 'Virtual Try On',
-    taskCategory: 'Feature Consumption',
+    id: 'TASK026',
+    taskName: 'Missed Login Activity',
+    taskCategory: 'Utility',
     taskType: 'Spend',
-    triggerCondition: 'User uses virtual try-on feature',
-    rewardPoints: -10,
+    triggerCondition: 'Per miss',
+    rewardPoints: -1,
     frequencyType: 'Per Use',
     maxCount: null,
     status: 'enabled',
     lastModifiedBy: 'Super Admin',
-    lastModifiedDate: '2024-01-10 15:40',
-  },
-  {
-    id: 'TASK008',
-    taskName: 'Restore Streak',
-    taskCategory: 'Login & Streak',
-    taskType: 'Spend',
-    triggerCondition: 'User purchases streak restoration',
-    rewardPoints: -200,
-    frequencyType: 'Per Use',
-    maxCount: null,
-    status: 'disabled',
-    lastModifiedBy: 'Super Admin',
-    lastModifiedDate: '2024-01-09 08:50',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'Deduct points per missed login activity',
   },
 ];
 
-export default function TaskConfigurationManagement() {
-  const [tasks, setTasks] = useState<TaskConfiguration[]>(mockTaskConfigurations);
+// Mock BCC Task Configurations
+const mockBCCTaskConfigurations: TaskConfiguration[] = [
+  {
+    id: 'BCC001',
+    taskName: 'Extraction (per image upload)',
+    taskCategory: 'AI Action',
+    taskType: 'Spend',
+    triggerCondition: 'Per image upload',
+    rewardPoints: -10,
+    frequencyType: 'Lifetime',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'BCC Coins deduction for wardrobe item extraction',
+  },
+  {
+    id: 'BCC002',
+    taskName: 'OOTD Generation',
+    taskCategory: 'AI Action',
+    taskType: 'Spend',
+    triggerCondition: 'Per session',
+    rewardPoints: -15,
+    frequencyType: 'Lifetime',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'BCC Coins deduction for AI OOTD generation',
+  },
+  {
+    id: 'BCC003',
+    taskName: 'OOTD Re-roll',
+    taskCategory: 'AI Action',
+    taskType: 'Spend',
+    triggerCondition: 'Per re-roll',
+    rewardPoints: -5,
+    frequencyType: 'Lifetime',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+    taskDescription: 'BCC Coins deduction for AI OOTD re-roll',
+  },
+  {
+    id: 'BCC004',
+    taskName: 'Virtual Try-On',
+    taskCategory: 'AI Action',
+    taskType: 'Spend',
+    triggerCondition: 'Per try-on',
+    rewardPoints: -10,
+    frequencyType: 'Lifetime',
+    maxCount: null,
+    status: 'enabled',
+    lastModifiedBy: 'Super Admin',
+    lastModifiedDate: '2024-01-15 14:30',
+  },
+];
+
+interface TaskConfigurationManagementProps {
+  configType?: 'BCA' | 'BCC';
+}
+
+export default function TaskConfigurationManagement({ configType = 'BCA' }: TaskConfigurationManagementProps) {
+  const [tasks, setTasks] = useState<TaskConfiguration[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [filters, setFilters] = useState<FilterCondition[]>([]);
@@ -161,9 +481,26 @@ export default function TaskConfigurationManagement() {
   const [appliedFrequency, setAppliedFrequency] = useState<string>('all');
   const [appliedStatus, setAppliedStatus] = useState<string>('all');
 
+  useEffect(() => {
+    setTasks(configType === 'BCA' ? mockBCATaskConfigurations : mockBCCTaskConfigurations);
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedTaskType('all');
+    setSelectedFrequency('all');
+    setSelectedStatus('all');
+    setAppliedCategory('all');
+    setAppliedTaskType('all');
+    setAppliedFrequency('all');
+    setAppliedStatus('all');
+    setFilters([]);
+    setSelectedTask(null);
+  }, [configType]);
+
   // Filter options
   const filterOptions = {
-    'Task Category': ['Onboarding & Profile', 'Login & Streak', 'Wardrobe & Outfit', 'Community Engagement', 'Feature Consumption'],
+    'Task Category': configType === 'BCA'
+      ? ['Onboarding & Profile', 'Login & Streak', 'Wardrobe', 'Community Engagement', 'Utility']
+      : ['AI Action'],
     'Task Type': ['Earn', 'Spend'],
     'Frequency Type': ['Once', 'Daily', 'Weekly', 'Monthly', 'Lifetime', 'Per Use'],
     'Status': ['Enabled', 'Disabled'],
@@ -257,12 +594,20 @@ export default function TaskConfigurationManagement() {
     const earnTasksCount = tasks.filter(t => t.taskType === 'Earn').length;
     const spendTasksCount = tasks.filter(t => t.taskType === 'Spend').length;
     
-    return [
-      { label: 'Total Tasks', value: tasks.length.toString(), icon: Award },
-      { label: 'Enabled Tasks', value: enabledCount.toString(), icon: Award },
-      { label: 'Earn Tasks', value: earnTasksCount.toString(), icon: Award },
-      { label: 'Spend Tasks', value: spendTasksCount.toString(), icon: Award },
-    ];
+    if (configType === 'BCA') {
+      return [
+        { label: 'Total Tasks', value: tasks.length.toString(), icon: Award },
+        { label: 'Enabled Tasks', value: enabledCount.toString(), icon: Award },
+        { label: 'Earn Tasks', value: earnTasksCount.toString(), icon: Award },
+        { label: 'Spend Tasks', value: spendTasksCount.toString(), icon: Award },
+      ];
+    } else {
+      return [
+        { label: 'Total BCC Tasks', value: tasks.length.toString(), icon: Award },
+        { label: 'Enabled Tasks', value: enabledCount.toString(), icon: Award },
+        { label: 'Spend Tasks', value: spendTasksCount.toString(), icon: Award },
+      ];
+    }
   };
 
   // Format date (DD/MM/YYYY HH:MM)
@@ -310,6 +655,7 @@ export default function TaskConfigurationManagement() {
         task={selectedTask}
         onBack={() => setSelectedTask(null)}
         onUpdate={handleUpdate}
+        configType={configType}
       />
     );
   }
@@ -319,10 +665,10 @@ export default function TaskConfigurationManagement() {
       <div className="max-w-[100%] mx-auto">
         {/* PAGE HEADER */}
         <PageHeader
-          title="Task Configurations"
+          title={configType === 'BCA' ? 'BCA Task Configuration' : 'BCC Task Configuration'}
           breadcrumbs={[
-            { label: 'Reward Management', href: '#' },
-            { label: 'Task Configurations', current: true },
+            { label: 'BCA & BCC Management', href: '#' },
+            { label: configType === 'BCA' ? 'BCA Task Configuration' : 'BCC Task Configuration', current: true },
           ]}
         >
           <div className="relative">
@@ -353,7 +699,7 @@ export default function TaskConfigurationManagement() {
           <IconButton
             icon={RefreshCw}
             onClick={() => {
-              setTasks(mockTaskConfigurations);
+              setTasks(configType === 'BCA' ? mockBCATaskConfigurations : mockBCCTaskConfigurations);
               setSearchQuery('');
               clearAllFilters();
               toast.success('Data refreshed');
@@ -485,7 +831,7 @@ export default function TaskConfigurationManagement() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Task Category</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Task Type</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Trigger Condition</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Reward Points</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">{configType === 'BCA' ? 'Reward Points' : 'BCC Coins'}</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Frequency Type</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Max Count</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400">Status</th>
@@ -536,7 +882,7 @@ export default function TaskConfigurationManagement() {
                           ? 'text-success-600 dark:text-success-400'
                           : 'text-error-600 dark:text-error-400'
                       }`}>
-                        {task.rewardPoints >= 0 ? '+' : ''}{task.rewardPoints}
+                        {task.rewardPoints >= 0 ? '+' : ''}{Math.abs(task.rewardPoints)} {configType === 'BCA' ? 'BCA' : 'BCC'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

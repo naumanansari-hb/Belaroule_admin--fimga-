@@ -260,17 +260,23 @@ export const getNavigationData = (
       ],
     },
 
-    // Reward Management
+    // BCA & BCC Management
     {
-      id: "reward-management",
-      label: "Reward Management",
+      id: "bca-bcc-management",
+      label: "BCA & BCC Management",
       icon: Award,
       subItems: [
         {
-          id: "task-configurations",
-          label: "Task Configurations",
-          onClick: () => onNavigate("task-configurations"),
-          active: currentPage === "task-configurations",
+          id: "bca-task-configuration",
+          label: "BCA Task Configuration",
+          onClick: () => onNavigate("bca-task-configuration"),
+          active: currentPage === "bca-task-configuration",
+        },
+        {
+          id: "bcc-task-configuration",
+          label: "BCC Task Configuration",
+          onClick: () => onNavigate("bcc-task-configuration"),
+          active: currentPage === "bcc-task-configuration",
         },
       ],
     },
@@ -300,6 +306,12 @@ export const getNavigationData = (
           label: "FAQs",
           onClick: () => onNavigate("faqs"),
           active: currentPage === "faqs",
+        },
+        {
+          id: "things-to-know",
+          label: "Things to Know",
+          onClick: () => onNavigate("things-to-know"),
+          active: currentPage === "things-to-know",
         },
         {
           id: "system-notifications",

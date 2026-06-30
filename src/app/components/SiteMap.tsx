@@ -74,7 +74,7 @@ const sectionColors: Record<string, {
     iconColor: 'text-indigo-600 dark:text-indigo-400',
     hoverBg: 'hover:bg-indigo-100 dark:hover:bg-indigo-900',
   },
-  'reward-management': {
+  'bca-bcc-management': {
     bg: 'bg-emerald-50 dark:bg-emerald-950',
     border: 'border-emerald-200 dark:border-emerald-800',
     iconBg: 'bg-emerald-100 dark:bg-emerald-900',

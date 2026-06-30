@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { 
   ArrowLeft,
   Save,
@@ -60,11 +60,13 @@ const defaultModules: ModulePermission[] = [
   { module: 'Flagged Posts', permissions: { view: false, edit: false, add: false } },
   { module: 'Flagged Comments', permissions: { view: false, edit: false, add: false } },
   { module: 'Flagged Wardrobe Items', permissions: { view: false, edit: false, add: false } },
-  { module: 'Task Configurations', permissions: { view: false, edit: false, add: false } },
+  { module: 'BCA Task Configuration', permissions: { view: false, edit: false, add: false } },
+  { module: 'BCC Task Configuration', permissions: { view: false, edit: false, add: false } },
   { module: 'Prompts & API Setting', permissions: { view: false, edit: false, add: false } },
   { module: 'API/LLM Config', permissions: { view: false, edit: false, add: false } },
   { module: 'Static Pages', permissions: { view: false, edit: false, add: false } },
   { module: 'FAQs', permissions: { view: false, edit: false, add: false } },
+  { module: 'Things to Know', permissions: { view: false, edit: false, add: false } },
   { module: 'Email Notifications', permissions: { view: false, edit: false, add: false } },
   { module: 'System Notification', permissions: { view: false, edit: false, add: false } },
   { module: 'Reports', permissions: { view: false, edit: false, add: false } },
