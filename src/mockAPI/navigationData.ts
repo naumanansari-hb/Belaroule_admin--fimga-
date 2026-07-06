@@ -130,26 +130,6 @@ export const getNavigationData = (
       ],
     },
 
-    // Plan Management
-    {
-      id: "rewards-payments",
-      label: "Plan Management",
-      icon: Gift,
-      subItems: [
-        {
-          id: "reward-plans",
-          label: "Reward Plans",
-          onClick: () => onNavigate("reward-plans"),
-          active: currentPage === "reward-plans",
-        },
-        {
-          id: "payment-history",
-          label: "Payment History",
-          onClick: () => onNavigate("payment-history"),
-          active: currentPage === "payment-history",
-        },
-      ],
-    },
 
     // Community Management
     {
@@ -283,6 +263,12 @@ export const getNavigationData = (
           label: "BCC Packages",
           onClick: () => onNavigate("bcc-packages"),
           active: currentPage === "bcc-packages",
+        },
+        {
+          id: "transaction-history",
+          label: "Transaction History",
+          onClick: () => onNavigate("transaction-history"),
+          active: currentPage === "transaction-history",
         },
       ],
     },

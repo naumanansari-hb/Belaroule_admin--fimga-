@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   User,
   Mail,
@@ -314,10 +314,29 @@ type CurrentView = 'users' | 'sub-admins' | 'guest-users';
 
 interface UserManagementProps {
   currentView: CurrentView;
+  initialUserId?: string | null;
+  onClearInitialUser?: () => void;
 }
 
-export default function UserManagement({ currentView }: UserManagementProps) {
+export default function UserManagement({ 
+  currentView,
+  initialUserId,
+  onClearInitialUser
+}: UserManagementProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  useEffect(() => {
+    if (initialUserId) {
+      const foundUser = mockRegisteredUsers.find(u => u.id === initialUserId);
+      if (foundUser) {
+        setSelectedItem(foundUser);
+        setActiveTab('profile');
+      }
+      if (onClearInitialUser) {
+        onClearInitialUser();
+      }
+    }
+  }, [initialUserId, onClearInitialUser]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);

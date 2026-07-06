@@ -24,6 +24,7 @@ import DefaultWardrobeManagement from "./components/DefaultWardrobeManagement";
 import RewardPlanManagement from "./components/RewardPlanManagement";
 import BccPackageManagement from "./components/BccPackageManagement";
 import PaymentHistoryManagement from "./components/PaymentHistoryManagement";
+import TransactionHistoryManagement from "./components/TransactionHistoryManagement";
 import PostsManagement from "./components/PostsManagement";
 import FlaggedPostsManagement from "./components/FlaggedPostsManagement";
 import FlaggedCommentsManagement from "./components/FlaggedCommentsManagement";
@@ -82,6 +83,7 @@ function AppContent() {
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | undefined>(undefined);
   const [selectedDeletedUserId, setSelectedDeletedUserId] = useState<string | undefined>(undefined);
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>(undefined);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const [userRole, setUserRole] = useState<'super-admin' | 'sub-admin'>('super-admin');
 
@@ -199,7 +201,11 @@ function AppContent() {
         ) : currentPage === "sample-design" ? (
           <SampleDesign />
         ) : currentPage === "users" || currentPage === "sub-admins" || currentPage === "guest-users" ? (
-          <UserManagement currentView={currentPage} />
+          <UserManagement 
+            currentView={currentPage} 
+            initialUserId={selectedUserId}
+            onClearInitialUser={() => setSelectedUserId(null)}
+          />
         ) : currentPage === "deleted-users" ? (
           <DeletedUsersManagement 
             onViewDetail={(deletedUserId) => {
@@ -240,6 +246,14 @@ function AppContent() {
           <RewardPlanManagement />
         ) : currentPage === "payment-history" ? (
           <PaymentHistoryManagement />
+        ) : currentPage === "transaction-history" ? (
+          <TransactionHistoryManagement 
+            onNavigate={handleNavigate}
+            onViewUserDetail={(userId) => {
+              setSelectedUserId(userId);
+              setCurrentPage("users");
+            }}
+          />
         ) : currentPage === "posts" ? (
           <PostsManagement />
         ) : currentPage === "flagged-posts" ? (

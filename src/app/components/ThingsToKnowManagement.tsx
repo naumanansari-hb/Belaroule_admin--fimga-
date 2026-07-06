@@ -307,6 +307,22 @@ export default function ThingsToKnowManagement() {
           >
             {showFilters ? 'Hide Filters' : 'Show Filters'}
           </SecondaryButton>
+          {selectedIds.length > 0 && (
+            <>
+              <SecondaryButton
+                onClick={handleBulkActivate}
+                size="sm"
+              >
+                Mark Active
+              </SecondaryButton>
+              <SecondaryButton
+                onClick={handleBulkDeactivate}
+                size="sm"
+              >
+                Mark Inactive
+              </SecondaryButton>
+            </>
+          )}
           <PrimaryButton
             onClick={handleAddCard}
             size="sm"
@@ -332,30 +348,7 @@ export default function ThingsToKnowManagement() {
         {/* SUMMARY WIDGETS */}
         <SummaryWidgets widgets={getSummaryWidgets()} />
 
-        {/* BULK ACTIONS BANNER */}
-        {selectedIds.length > 0 && (
-          <div className="mb-4 bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800/30 px-4 py-3 rounded-lg flex items-center justify-between gap-4">
-            <span className="text-sm font-medium text-primary-800 dark:text-primary-200">
-              {selectedIds.length} {selectedIds.length === 1 ? 'item' : 'items'} selected
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={handleBulkActivate}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-success-600 hover:bg-success-700 dark:bg-success-500 dark:hover:bg-success-600 rounded-md transition-colors"
-              >
-                <CheckCircle className="w-3.5 h-3.5" />
-                Activate
-              </button>
-              <button
-                onClick={handleBulkDeactivate}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-warning-600 hover:bg-warning-700 dark:bg-warning-500 dark:hover:bg-warning-600 rounded-md transition-colors"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                Deactivate
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* FILTERS SECTION */}
         {showFilters && (
