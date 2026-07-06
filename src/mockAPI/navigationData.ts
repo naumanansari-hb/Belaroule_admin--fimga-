@@ -278,6 +278,12 @@ export const getNavigationData = (
           onClick: () => onNavigate("bcc-task-configuration"),
           active: currentPage === "bcc-task-configuration",
         },
+        {
+          id: "bcc-packages",
+          label: "BCC Packages",
+          onClick: () => onNavigate("bcc-packages"),
+          active: currentPage === "bcc-packages",
+        },
       ],
     },
 

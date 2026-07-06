@@ -22,6 +22,7 @@ import AgeGroupManagement from "./components/AgeGroupManagement";
 import TransactionTypeManagement from "./components/TransactionTypeManagement";
 import DefaultWardrobeManagement from "./components/DefaultWardrobeManagement";
 import RewardPlanManagement from "./components/RewardPlanManagement";
+import BccPackageManagement from "./components/BccPackageManagement";
 import PaymentHistoryManagement from "./components/PaymentHistoryManagement";
 import PostsManagement from "./components/PostsManagement";
 import FlaggedPostsManagement from "./components/FlaggedPostsManagement";
@@ -265,6 +266,8 @@ function AppContent() {
           <TaskConfigurationManagement configType="BCA" />
         ) : currentPage === "bcc-task-configuration" ? (
           <TaskConfigurationManagement configType="BCC" />
+        ) : currentPage === "bcc-packages" ? (
+          <BccPackageManagement />
         ) : currentPage === "static-pages" ? (
           <StaticPagesManagement />
         ) : currentPage === "faqs" ? (
