@@ -713,12 +713,6 @@ export default function TaskConfigurationManagement({ configType = 'BCA' }: Task
         {/* SUMMARY WIDGETS */}
         <SummaryWidgets widgets={getSummaryWidgets()} />
 
-        {/* INFO BANNER */}
-        <div className="mb-4 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800 rounded-lg px-4 py-2">
-          <p className="text-xs text-primary-800 dark:text-primary-200">
-            <strong>Super Admin Only:</strong> Tasks are system-defined. You can edit reward points, frequency, and enable/disable tasks, but cannot create or delete tasks.
-          </p>
-        </div>
 
         {/* FILTERS SECTION */}
         {showFilters && (
